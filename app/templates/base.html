@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% if title %}
+    <title>{{ title }} - Tunifif</title>
+    {% else %}
+    <title>Tunifi</title>
+    {% endif %}
+</head>
+<body>
+    <div class="header">
+    Tunifi
+    <a href="/index">Home</a>
+    <a href="/button">Button!</a>
+    </div>
+    <hr>
+    {% block content %}{% endblock %}
+</body>
+</html>
