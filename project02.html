@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Music Upload App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      background-color: #f0f2f5;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .song-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .song-card p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎵 Music Upload App</h1>
+
+
+  <form id="uploadForm">
+    <input type="text" id="title" placeholder="Song Title" required>
+    <input type="text" id="artist" placeholder="Artist Name" required>
+    <input type="file" id="fileInput" accept="audio/*" required>
+    <button type="submit">Upload Song</button>
+  </form>
+
+
+  <div id="songsList"></div>
+
+  <script>
+    const uploadForm = document.getElementById('uploadForm');
+    const songsList = document.getElementById('songsList');
+  
+    uploadForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+  
+      const title = document.getElementById('title').value;
+      const artist = document.getElementById('artist').value;
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+  
+      if (!title || !artist || !file) {
+        alert('Please fill in all fields.');
+        return;
+      }
+  
+      // 1. Show "Publishing..." message
+      const publishingMessage = document.createElement('p');
+      publishingMessage.textContent = 'Publishing your song...';
+      songsList.appendChild(publishingMessage);
+  
+      // 2. Simulate delay (like server uploading)
+      setTimeout(() => {
+        // After delay, remove "Publishing..." message
+        publishingMessage.remove();
+  
+        // 3. Create the song card
+        const songCard = document.createElement('div');
+        songCard.className = 'song-card';
+  
+        const titleElement = document.createElement('p');
+        titleElement.innerHTML = `<strong>Title:</strong> ${title}`;
+  
+        const artistElement = document.createElement('p');
+        artistElement.innerHTML = `<strong>Artist:</strong> ${artist}`;
+  
+        const fileElement = document.createElement('p');
+        fileElement.innerHTML = `<strong>File:</strong> ${file.name}`;
+  
+        songCard.appendChild(titleElement);
+        songCard.appendChild(artistElement);
+        songCard.appendChild(fileElement);
+  
+        // 4. Add song card to songsList
+        songsList.appendChild(songCard);
+  
+        // 5. Reset form
+        uploadForm.reset();
+      }, 2000); 
+  </script>
+  
+
+</body>
+</html>
