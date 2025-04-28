@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-group container mt-4">
+    <h2 class="mb-4">Share a song:</h2>
+    <form>
+        <div class="mb-3 row">
+            <label for="songName" class="col-sm-2 col-form-label">Song Name:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="songName" value="Song1">
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <label for="artist" class="col-sm-2 col-form-label">Artist:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="artist" value="Atrist1">
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <label for="youtubeLink" class="col-sm-2 col-form-label">YouTube Link:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="youtubeLink" value="Link">
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <label for="rating" class="col-sm-2 col-form-label">Rating:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="rating" value="Rating">
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <label for="shareWith" class="col-sm-2 col-form-label">Share With:</label>
+            <div class="col-sm-10">
+                <select class="form-select" id="shareWith">
+                    <option selected>user drop down</option>
+                </select>
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <div class="col-sm-10 offset-sm-2">
+                <button type="submit" class="btn btn-primary">Share</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="mt-5">
+        <h2 class="mb-4">Shared Songs:</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Who</th>
+                    <th>Whom</th>
+                    <th>Which song</th>
+                    <th>D/T</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>A</td>
+                    <td>B</td>
+                    <td>Song1</td>
+                    <td>mm/dd/yy 10:10:10pm</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

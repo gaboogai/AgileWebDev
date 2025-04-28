@@ -19,3 +19,7 @@ def index():
 @app.route('/button')
 def button():
     return render_template("button.html", title="Button!")
+
+@app.route('/share')
+def share():
+    return render_template("share.html", title="Share")
