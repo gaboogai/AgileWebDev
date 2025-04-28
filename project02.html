@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Music Upload App</title>
+  <title>🎵 Music Upload & Star Rating</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
       background-color: #f0f2f5;
     }
@@ -39,75 +39,133 @@
     .song-card p {
       margin: 5px 0;
     }
+    .star-rating {
+      margin-top: 10px;
+    }
+    .star {
+      font-size: 25px;
+      cursor: pointer;
+      color: #ddd;
+    }
+    .star.selected {
+      color: #f39c12;
+    }
+    .current-rating {
+      margin-top: 10px;
+      font-style: italic;
+      color: #555;
+    }
   </style>
 </head>
 <body>
 
-  <h1>🎵 Music Upload App</h1>
-
+  <h1>🎵 Music Upload & Star Rating</h1>
 
   <form id="uploadForm">
     <input type="text" id="title" placeholder="Song Title" required>
     <input type="text" id="artist" placeholder="Artist Name" required>
-    <input type="file" id="fileInput" accept="audio/*" required>
     <button type="submit">Upload Song</button>
   </form>
 
-
+  <h2 style="text-align: center;">Uploaded Songs 🎶</h2>
   <div id="songsList"></div>
 
   <script>
     const uploadForm = document.getElementById('uploadForm');
     const songsList = document.getElementById('songsList');
-  
+
+    let uploadedSongs = [];
+
     uploadForm.addEventListener('submit', function(event) {
       event.preventDefault();
-  
+
       const title = document.getElementById('title').value;
       const artist = document.getElementById('artist').value;
-      const fileInput = document.getElementById('fileInput');
-      const file = fileInput.files[0];
-  
-      if (!title || !artist || !file) {
+
+      if (!title || !artist) {
         alert('Please fill in all fields.');
         return;
       }
-  
-      // 1. Show "Publishing..." message
-      const publishingMessage = document.createElement('p');
-      publishingMessage.textContent = 'Publishing your song...';
-      songsList.appendChild(publishingMessage);
-  
-      // 2. Simulate delay (like server uploading)
-      setTimeout(() => {
-        // After delay, remove "Publishing..." message
-        publishingMessage.remove();
-  
-        // 3. Create the song card
+
+      const newSong = {
+        id: Date.now(),
+        title: title,
+        artist: artist
+      };
+
+      uploadedSongs.push(newSong);
+
+      renderSongs();
+
+      uploadForm.reset();
+    });
+
+    function renderSongs() {
+      songsList.innerHTML = '';
+
+      uploadedSongs.forEach(song => {
         const songCard = document.createElement('div');
         songCard.className = 'song-card';
-  
+        songCard.dataset.songId = song.id;
+
         const titleElement = document.createElement('p');
-        titleElement.innerHTML = `<strong>Title:</strong> ${title}`;
-  
+        titleElement.innerHTML = `<strong>Title:</strong> ${song.title}`;
+
         const artistElement = document.createElement('p');
-        artistElement.innerHTML = `<strong>Artist:</strong> ${artist}`;
-  
-        const fileElement = document.createElement('p');
-        fileElement.innerHTML = `<strong>File:</strong> ${file.name}`;
-  
+        artistElement.innerHTML = `<strong>Artist:</strong> ${song.artist}`;
+
+        // Star Rating
+        const starRatingDiv = document.createElement('div');
+        starRatingDiv.className = 'star-rating';
+
+        for (let i = 1; i <= 5; i++) {
+          const star = document.createElement('span');
+          star.className = 'star';
+          star.textContent = '★';
+          star.addEventListener('click', () => setRating(song.id, i, starRatingDiv));
+
+          starRatingDiv.appendChild(star);
+        }
+
+        const currentRating = document.createElement('div');
+        currentRating.className = 'current-rating';
+
         songCard.appendChild(titleElement);
         songCard.appendChild(artistElement);
-        songCard.appendChild(fileElement);
-  
-        // 4. Add song card to songsList
+        songCard.appendChild(starRatingDiv);
+        songCard.appendChild(currentRating);
+
         songsList.appendChild(songCard);
-  
-        // 5. Reset form
-        uploadForm.reset();
-      }, 2000); 
+
+        updateRatingDisplay(song.id, songCard);
+      });
+    }
+
+    function setRating(songId, rating, starRatingDiv) {
+      localStorage.setItem('rating_' + songId, rating);
+      updateRatingDisplay(songId, starRatingDiv);
+    }
+
+    function updateRatingDisplay(songId, songCard) {
+      const rating = localStorage.getItem('rating_' + songId);
+      const stars = songCard.querySelectorAll('.star');
+      const currentRating = songCard.querySelector('.current-rating');
+
+      stars.forEach((star, index) => {
+        if (index < rating) {
+          star.classList.add('selected');
+        } else {
+          star.classList.remove('selected');
+        }
+      });
+
+      if (rating) {
+        currentRating.textContent = `Rating: ${rating} stars`;
+      } else {
+        currentRating.textContent = ``;
+      }
+    }
   </script>
-  
 
 </body>
 </html>
