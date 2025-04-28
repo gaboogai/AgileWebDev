@@ -8,69 +8,20 @@
         <link rel="stylesheet" href="Project_style.css">
     </head>
     <body>
-      <div class="upload-container">
-        <h2>🎵 Upload New Music</h2>
-        <form id="uploadForm">
-          <div class="form-group">
-            <label for="title">Song Title</label>
-            <input type="text" id="title" required>
-          </div>
+      
+      <h1>TUN'D Upload</h1>
     
-          <div class="form-group">
-            <label for="artist">Artist Name</label>
-            <input type="text" id="artist" required>
-          </div>
+      <form id="uploadForm">
+        <input type="text" id="title" placeholder="Song Title" required oninput="showSuggestions('title')">
+        <div class="suggestions" id="titleSuggestions"></div>
+        <input type="text" id="artist" placeholder="Artist Name" required oninput="showSuggestions('artist')">
+        <div class="suggestions" id="artistSuggestions"></div>
+        <button type="submit">Upload Song</button>
+      </form>
     
-          <div class="form-group">
-            <label for="album">Album</label>
-            <input type="text" id="album">
-          </div>
+      <h2 style="text-align: center;">TUN'D rating</h2>
+      <div id="songsList"></div>
     
-          <div class="form-group">
-            <label for="genre">Genre</label>
-            <select id="genre" multiple>
-              <option>Pop</option>
-              <option>Hip-Hop</option>
-              <option>Rock</option>
-              <option>Classical</option>
-              <option>Jazz</option>
-            </select>
-          </div>
-    
-          <div class="form-group">
-            <label for="cover">Cover Art</label>
-            <input type="file" id="cover" accept="image/*" required>
-          </div>
-    
-          <div class="form-group">
-            <label for="audio">Audio File</label>
-            <input type="file" id="audio" accept="audio/*" required>
-          </div>
-    
-          <div class="form-group">
-            <label for="release">Release Date</label>
-            <input type="date" id="release">
-          </div>
-    
-          <div class="form-group checkbox-group">
-            <input type="checkbox" id="explicit">
-            <label for="explicit">Explicit Content</label>
-          </div>
-    
-          <div class="form-group">
-            <label for="tags">Tags (comma separated)</label>
-            <input type="text" id="tags">
-          </div>
-    
-          <div class="form-group">
-            <label for="lyrics">Lyrics (optional)</label>
-            <textarea id="lyrics" rows="4"></textarea>
-          </div>
-    
-          <button type="submit" id="uploadBtn" disabled>Upload Song</button>
-        </form>
-          </div>
-          
-        <script src="Main.js"></script>
+        <script src="Project_main.js></script>
     </body>
 </html>
