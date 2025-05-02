@@ -104,7 +104,7 @@ def add_review():
         artist = request.form['artist']
         title = request.form['title']
         rating = int(request.form['rating'])
-        review_text = request.form['review']
+        review_text = request.form.get('review', '')
         
         song = Song.query.filter_by(title=title, artist=artist).first()
         if not song:
@@ -168,10 +168,10 @@ def share():
     users = User.query.filter(User.username != username).all()
     
     if request.method == 'POST':
-        song_name = request.form['songName']
-        artist = request.form['artist']
-        youtube_link = request.form['youtubeLink']
-        recipient = request.form['shareWith']
+        song_name = request.form.get('songName')
+        artist = request.form.get('artist')
+        youtube_link = request.form.get('youtubeLink', '')
+        recipient = request.form.get('shareWith')
         
         recipient_user = User.query.filter_by(username=recipient).first()
         if not recipient_user:
