@@ -10,8 +10,6 @@ migrate = Migrate(app, db)
 
 from app import routes, models
 
-from app.models import User, Song, Review
-
 from app.commands import init_db_command, seed_db_command
 app.cli.add_command(init_db_command)
 app.cli.add_command(seed_db_command)
