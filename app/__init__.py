@@ -1,18 +1,21 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from config import Config
+from flask_migrate import Migrate
+import os
 
-db = SQLAlchemy()
+app = Flask(__name__)
 
-def create_app(config_class=Config):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
-    
-    db.init_app(app)
-    
-    from app.routes import bp
-    app.register_blueprint(bp)
-    
-    return app
+basedir = os.path.abspath(os.path.dirname(__file__))
+parent_dir = os.path.dirname(basedir)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'app.db')
+app.config['SECRET_KEY'] = "you-will-never-guess"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-from app import models
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+from app import routes, models
+
+from app.commands import init_db_command, seed_db_command
+app.cli.add_command(init_db_command)
+app.cli.add_command(seed_db_command)
