@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="content-area">
+  <h2>Your Dashboard</h2>
+
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-value">{{ total_reviews }}</div>
+        <div class="stat-label">Total Reviews</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-value">{{ reviewed_songs }}</div>
+        <div class="stat-label">Reviewed Songs</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-value">{{ reviewed_artists }}</div>
+        <div class="stat-label">Reviewed Artists</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="recent-activity">
+    <h4>Recent Activity</h4>
+    {% if recent_reviews %}
+      <div class="activity-feed">
+        {% for review in recent_reviews %}
+          <div class="review-item">
+            <div class="d-flex justify-content-between">
+              <h5>{{ review.song.title }} - {{ review.song.artist }}</h5>
+              <div class="rating">
+                {% for i in range(review.rating) %}
+                  <i class="fas fa-star text-warning"></i>
+                {% endfor %}
+                {% for i in range(5 - review.rating) %}
+                  <i class="far fa-star text-warning"></i>
+                {% endfor %}
+              </div>
+            </div>
+            {% if review.comment %}
+              <p class="review-text">{{ review.comment }}</p>
+            {% else %}
+              <p class="text-muted"><em>No comment provided</em></p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">
+        You haven't added any reviews yet. Search for music to start reviewing!
+      </div>
+    {% endif %}
+  </div>
+  
+  <div class="top-charts mt-4">
+    <h4>Top Rated Songs</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <h5>Albums</h5>
+        <ul class="list-group">
+          {% for song in top_albums %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ loop.index }}. {{ song.title }}</strong> - {{ song.artist }}
+              </div>
+              <span class="badge bg-primary rounded-pill">
+                {% set avg_rating = 0 %}
+                {% for review in song.reviews %}
+                  {% set avg_rating = avg_rating + review.rating %}
+                {% endfor %}
+                {% if song.reviews.count() > 0 %}
+                  {% set avg_rating = avg_rating / song.reviews.count() %}
+                  {{ "%.1f"|format(avg_rating) }} ★
+                {% else %}
+                  0.0 ★
+                {% endif %}
+              </span>
+            </li>
+          {% else %}
+            <li class="list-group-item">No ratings yet</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h5>Songs</h5>
+        <ul class="list-group">
+          {% for song in top_songs %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ loop.index }}. {{ song.title }}</strong> - {{ song.artist }}
+              </div>
+              <span class="badge bg-primary rounded-pill">
+                {% set avg_rating = 0 %}
+                {% for review in song.reviews %}
+                  {% set avg_rating = avg_rating + review.rating %}
+                {% endfor %}
+                {% if song.reviews.count() > 0 %}
+                  {% set avg_rating = avg_rating / song.reviews.count() %}
+                  {{ "%.1f"|format(avg_rating) }} ★
+                {% else %}
+                  0.0 ★
+                {% endif %}
+              </span>
+            </li>
+          {% else %}
+            <li class="list-group-item">No ratings yet</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
