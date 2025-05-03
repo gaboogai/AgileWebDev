@@ -56,36 +56,6 @@
         <div class="col-md-9">
           <div class="content-area">
             <h2>Your Dashboard</h2>
-            
-            <div class="quick-add bg-light p-3 rounded mb-4">
-              <h4>Quick Add Review</h4>
-              <form action="/add-review" method="POST" class="row g-3">
-                <div class="col-md-5">
-                  <input type="text" class="form-control" placeholder="Artist Name" name="artist" required>
-                </div>
-                <div class="col-md-5">
-                  <input type="text" class="form-control" placeholder="Album/Song Name" name="title" required>
-                </div>
-                <div class="col-md-2">
-                  <div class="rating-select">
-                    <select class="form-select" name="rating" required>
-                      <option value="" selected disabled>Rating</option>
-                      <option value="5">5 Stars</option>
-                      <option value="4">4 Stars</option>
-                      <option value="3">3 Stars</option>
-                      <option value="2">2 Stars</option>
-                      <option value="1">1 Star</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <textarea class="form-control" placeholder="Your thoughts..." name="review" rows="2"></textarea>
-                </div>
-                <div class="col-12">
-                  <button type="submit" class="btn btn-primary">Submit Review</button>
-                </div>
-              </form>
-            </div>
 
             <div class="row mb-4">
               <div class="col-md-4">
@@ -132,65 +102,6 @@
               </div>
             </div>
             
-            <div class="recommended mt-4">
-              <h4>Recommended For You</h4>
-              <div class="row">
-                <div class="col-md-4 mb-3">
-                  <div class="album-card text-center">
-                    <div class="album-art bg-secondary text-white mx-auto mb-2" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
-                      <i class="fas fa-compact-disc fa-2x"></i>
-                    </div>
-                    <h5>Dark Side of the Moon</h5>
-                    <p class="mb-1">Pink Floyd</p>
-                    <div class="rating mb-2">
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star-half-alt text-warning"></i>
-                      <span>4.8</span>
-                    </div>
-                    <a href="album_detail.html" class="btn btn-sm btn-outline-primary">View Album</a>
-                  </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <div class="album-card text-center">
-                    <div class="album-art bg-secondary text-white mx-auto mb-2" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
-                      <i class="fas fa-compact-disc fa-2x"></i>
-                    </div>
-                    <h5>Rumours</h5>
-                    <p class="mb-1">Fleetwood Mac</p>
-                    <div class="rating mb-2">
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <span>4.9</span>
-                    </div>
-                    <a href="album_detail.html" class="btn btn-sm btn-outline-primary">View Album</a>
-                  </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <div class="album-card text-center">
-                    <div class="album-art bg-secondary text-white mx-auto mb-2" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
-                      <i class="fas fa-compact-disc fa-2x"></i>
-                    </div>
-                    <h5>Abbey Road</h5>
-                    <p class="mb-1">The Beatles</p>
-                    <div class="rating mb-2">
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <i class="fas fa-star text-warning"></i>
-                      <span>5.0</span>
-                    </div>
-                    <a href="album_detail.html" class="btn btn-sm btn-outline-primary">View Album</a>
-                  </div>
-                </div>
-              </div>
-            </div>
             
             <div class="top-charts mt-4">
               <h4>Top Rated This Month</h4>
