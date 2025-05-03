@@ -9,3 +9,7 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 from app import routes, modules
+
+from app.commands import init_db_command, seed_db_command
+app.cli.add_command(init_db_command)
+app.cli.add_command(seed_db_command)
