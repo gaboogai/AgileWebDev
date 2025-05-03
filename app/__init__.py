@@ -1,15 +1,18 @@
 from flask import Flask
-from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from app.config import Config
+from config import Config
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+db = SQLAlchemy()
 
-from app import routes, models
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+    
+    db.init_app(app)
+    
+    from app.routes import bp
+    app.register_blueprint(bp)
+    
+    return app
 
-from app.commands import init_db_command, seed_db_command
-app.cli.add_command(init_db_command)
-app.cli.add_command(seed_db_command)
+from app import models
