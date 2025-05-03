@@ -1,7 +1,7 @@
 import click
 from flask.cli import with_appcontext
 from app import db
-from app.modules import User, Song, Review
+from app.models import User, Song, Review
 
 @click.command('init-db')
 @with_appcontext
