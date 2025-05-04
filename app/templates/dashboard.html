@@ -68,13 +68,12 @@
                 <strong>{{ loop.index }}. {{ song.title }}</strong> - {{ song.artist }}
               </div>
               <span class="badge bg-primary rounded-pill">
-                {% set avg_rating = 0 %}
-                {% for review in song.reviews %}
-                  {% set avg_rating = avg_rating + review.rating %}
-                {% endfor %}
-                {% if song.reviews.count() > 0 %}
-                  {% set avg_rating = avg_rating / song.reviews.count() %}
-                  {{ "%.1f"|format(avg_rating) }} ★
+                {% if song.reviews and song.reviews.count() > 0 %}
+                  {% set total = 0 %}
+                  {% for review in song.reviews %}
+                    {% set total = total + review.rating %}
+                  {% endfor %}
+                  {{ "%.1f"|format(total / song.reviews.count()) }} ★
                 {% else %}
                   0.0 ★
                 {% endif %}
