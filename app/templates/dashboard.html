@@ -59,46 +59,20 @@
   <div class="top-charts mt-4">
     <h4>Top Rated Songs</h4>
     <div class="row">
-      <div class="col-md-6">
-        <h5>Albums</h5>
+      <div class="col-md-12">
         <ul class="list-group">
-          {% for song in top_albums %}
+          {% for song in top_songs %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
               <div>
                 <strong>{{ loop.index }}. {{ song.title }}</strong> - {{ song.artist }}
               </div>
               <span class="badge bg-primary rounded-pill">
                 {% if song.reviews and song.reviews.count() > 0 %}
-                  {% set total = 0 %}
+                {% set ns = namespace(total=0) %}
                   {% for review in song.reviews %}
-                    {% set total = total + review.rating %}
+                  {% set ns.total = ns.total + review.rating %}
                   {% endfor %}
-                  {{ "%.1f"|format(total / song.reviews.count()) }} ★
-                {% else %}
-                  0.0 ★
-                {% endif %}
-              </span>
-            </li>
-          {% else %}
-            <li class="list-group-item">No ratings yet</li>
-          {% endfor %}
-        </ul>
-      </div>
-      <div class="col-md-6">
-        <h5>Songs</h5>
-        <ul class="list-group">
-          {% for song in top_albums %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <div>
-                <strong>{{ loop.index }}. {{ song.title }}</strong> - {{ song.artist }}
-              </div>
-              <span class="badge bg-primary rounded-pill">
-                {% if song.reviews and song.reviews.count() > 0 %}
-                  {% set total = 0 %}
-                  {% for review in song.reviews %}
-                    {% set total = total + review.rating %}
-                  {% endfor %}
-                  {{ "%.1f"|format(total / song.reviews.count()) }} ★
+                  {{ "%.1f"|format(ns.total / song.reviews.count()) }} ★
                 {% else %}
                   0.0 ★
                 {% endif %}

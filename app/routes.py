@@ -74,8 +74,7 @@ def dashboard():
     recent_reviews = Review.query.filter_by(username=username).order_by(Review.id.desc()).limit(5).all()
     
     # Get top rated albums and songs
-    top_albums = db.session.query(Song).join(Review).group_by(Song.id).order_by(db.func.avg(Review.rating).desc()).limit(5).all()
-    top_songs = top_albums  # Use the same list for both since we only track songs
+    top_songs = db.session.query(Song).join(Review).group_by(Song.id).order_by(db.func.avg(Review.rating).desc()).limit(5).all()
     
     return render_template('dashboard.html', 
                            title="Dashboard",
@@ -84,7 +83,6 @@ def dashboard():
                            reviewed_songs=reviewed_songs,
                            reviewed_artists=reviewed_artists,
                            recent_reviews=recent_reviews,
-                           top_albums=top_albums,
                            top_songs=top_songs)
 
 @app.route('/logout')
