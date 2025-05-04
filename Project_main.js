@@ -127,8 +127,4 @@ const uploadForm = document.getElementById('uploadForm');
       uploadedSongs.push(newSong);
 
       renderSongs();  
-
-      uploadForm.reset();
-      titleSuggestions.innerHTML = '';
-      artistSuggestions.innerHTML = '';
     });

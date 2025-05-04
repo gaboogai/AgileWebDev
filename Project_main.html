@@ -5,23 +5,29 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
         <title>Music App</title>
-        <link rel="stylesheet" href="Project_style.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='Project_style.css') }}">
     </head>
     <body>
       
       <h1>TUN'D Upload</h1>
     
-      <form id="uploadForm">
-        <input type="text" id="title" placeholder="Song Title" required oninput="showSuggestions('title')">
-        <div class="suggestions" id="titleSuggestions"></div>
-        <input type="text" id="artist" placeholder="Artist Name" required oninput="showSuggestions('artist')">
-        <div class="suggestions" id="artistSuggestions"></div>
+      <form id="uploadForm" method="POST" action="/upload">
+        <div class="form-group">
+          <input type="text" id="title" placeholder="Song Title" required oninput="showSuggestions('title')">
+          <div class="suggestions" id="titleSuggestions"></div>
+        </div>
+    
+        <div class="form-group" method ="POST" action="/upload">
+          <input type="text" id="artist" placeholder="Artist Name" required oninput="showSuggestions('artist')">
+          <div class="suggestions" id="artistSuggestions"></div>
+        </div>
+    
         <button type="submit">Upload Song</button>
       </form>
     
       <h2 style="text-align: center;">TUN'D rating</h2>
       <div id="songsList"></div>
     
-        <script src="Project_main.js"> </script>
+        <script src="{{ url_for('static', filename='Project_main.js') }}"> </script>
     </body>
 </html>

@@ -1,22 +1,38 @@
 body {
-  font-family: Arial, sans-serif;
+  background-color: #1e3c72;
+  font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
+  color: #333;
+  min-height: 100vh;
   padding: 20px;
-  max-width: 700px;
-  margin: auto;
-  background-color: #f0f2f5;
-  box-sizing: border-box; 
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.container {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  padding: 30px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 h1 {
+  color: #1e3c72;
+  font-weight: 700;
   text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
 }
 
 form {
-  background: white;
+  background: #fff;
   padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  margin: 0 auto 30px auto;
+  width: 33%; 
+  min-width: 280px; 
 }
 
 input, button, textarea {
@@ -25,20 +41,21 @@ input, button, textarea {
   margin-top: 10px;
   margin-bottom: 15px;
   border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.song-card {
-  background: white;
-  padding: 15px;
   border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  box-sizing: border-box; 
+  box-sizing: border-box;
+  font-size: 1rem;
 }
 
-.song-card p {
-  margin: 5px 0;
+button {
+  background-color: #1e3c72;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background-color: #0c2b5e;
 }
 
 .suggestions {
@@ -46,9 +63,11 @@ input, button, textarea {
   border: 1px solid #ccc;
   border-radius: 6px;
   padding: 5px;
-  margin-top: 5px;
+  margin-top: -10px;
+  margin-bottom: 15px;
   max-height: 150px;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .suggestions div {
@@ -60,12 +79,29 @@ input, button, textarea {
   background-color: #ddd;
 }
 
+#songsList {
+  margin-top: 20px;
+}
+
+.song-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.song-card p {
+  margin: 5px 0;
+  font-size: 1rem;
+}
+
 .stars {
   margin-top: 10px;
 }
 
 .stars span {
-  font-size: 20px;
+  font-size: 24px;
   cursor: pointer;
 }
 
@@ -74,18 +110,10 @@ input, button, textarea {
 }
 
 .comment-section {
-  margin-top: 15px; 
-  padding-top: 10px;
-  padding-bottom: 10px;
-  border-top: 1px solid #ccc;
+  margin-top: 15px;
 }
 
 .comment-section textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
   resize: vertical;
   height: 80px;
-  box-sizing: border-box; 
 }
