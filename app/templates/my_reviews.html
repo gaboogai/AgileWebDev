@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="content-area">
+  <h2>My Reviews</h2>
+  
+  {% if reviews %}
+    <div class="review-list">
+      {% for review in reviews %}
+        <div class="review-item card mb-3">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <h4>{{ review.song.title }} - {{ review.song.artist }}</h4>
+              <div class="rating">
+                {% for i in range(review.rating) %}
+                  <i class="fas fa-star text-warning"></i>
+                {% endfor %}
+                {% for i in range(5 - review.rating) %}
+                  <i class="far fa-star text-warning"></i>
+                {% endfor %}
+              </div>
+            </div>
+            {% if review.comment %}
+              <p class="review-text">{{ review.comment }}</p>
+            {% else %}
+              <p class="text-muted"><em>No comment provided</em></p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      You haven't written any reviews yet. Go to the search page to find music and start reviewing!
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
