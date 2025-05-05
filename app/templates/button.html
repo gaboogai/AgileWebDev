@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>Hello</h1>
-<div>
-    <button id="myButton" type="button" onclick="toggleText()">Button!</button>
-    <p id="textBox"></p>
-</div>
-<script src="{{ url_for('static', filename='button.js')}}"></script>
-{% endblock %}
