@@ -24,3 +24,8 @@ class Review(db.Model):
     comment = db.Column(db.Text)
     username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
     song_id = db.Column(db.Integer, db.ForeignKey('song.id'), nullable=False)
+
+class ReviewShares(db.Model):
+    share_id = db.Column(db.Integer, primary_key=True)
+    review_id = db.Column(db.Integer, db.ForeignKey('review.id'), nullable=False)
+    shared = db.Column(db.String(20), nullable=False)

@@ -183,8 +183,21 @@ def button():
         return redirect(url_for('index'))
     return render_template("button.html", title="Button!")
 
+    
+
+
 @app.route('/share')
-def share():
+def share_review():
     if 'username' not in session:
         return redirect(url_for('index'))
-    return render_template("share.html", title="Share")
+    
+    username = session['username']
+    user = User.query.filter_by(username=username).first()
+    
+    # Get recent reviews
+    reviews = Review.query.filter_by(username=username).order_by(Review.id.desc()).all()
+    
+    
+    return render_template("share.html", title="Share", 
+                           user=user,
+                           reviews=reviews,)
