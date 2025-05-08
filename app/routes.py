@@ -227,3 +227,32 @@ def prepare_share():
                            title="Send Reviews", 
                            selected_reviews=selected_review_ids,
                            reviews=reviews)
+
+@app.route('/share-reviews', methods=['POST'])
+def share_reviews():
+    if 'username' not in session:
+        return redirect(url_for('index'))
+    
+    review_ids = request.form.getlist('review_ids')
+    recipient_username = request.form.get('recipient_username')
+    
+    if not review_ids or not recipient_username:
+        flash('Missing information. Please try again.')
+        return redirect(url_for('share_review'))
+    
+    recipient = User.query.filter_by(username=recipient_username).first()
+    if not recipient:
+        flash(f'User "{recipient_username}" does not exist.')
+        return redirect(url_for('prepare_share'))
+    
+    for review_id in review_ids:
+        review = Review.query.get(int(review_id))
+        if review and review.username == session['username']:
+            existing_share = ReviewShares.query.filter_by(review_id=review.id, shared=recipient_username).first()
+            
+            if not existing_share:
+                new_share = ReviewShares(review_id=review.id, shared=recipient_username)
+                db.session.add(new_share)
+    
+    db.session.commit()
+    return redirect(url_for('share_review'))
