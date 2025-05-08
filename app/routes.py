@@ -248,10 +248,10 @@ def share_reviews():
     for review_id in review_ids:
         review = Review.query.get(int(review_id))
         if review and review.username == session['username']:
-            existing_share = ReviewShares.query.filter_by(review_id=review.id, shared=recipient_username).first()
+            existing_share = ReviewShares.query.filter_by(review_id=review.id, username=recipient_username).first()
             
             if not existing_share:
-                new_share = ReviewShares(review_id=review.id, shared=recipient_username)
+                new_share = ReviewShares(review_id=review.id, username=recipient_username)
                 db.session.add(new_share)
     
     db.session.commit()
