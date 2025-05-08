@@ -1,10 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-{% if reviews %}
-<div class="recent-activity">
+
+<div class="card mb-4"> <div class="card-header bg-primary text-white"> <h4> Share Your Reviews</h4> </div> <div class="card-body"> <p>Select the reviews you'd like to share</p>
+<form action="{{ url_for('prepare_share') }}" method="POST">
+  {% if reviews %}
+  <div class="recent-activity">
     <div class="activity-feed">
-        {% for review in reviews %}
-          <div class="review-item">
+      {% for review in reviews %}
+      <div class="review-item p-3 mb-3 border rounded">
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" name="selected_reviews" value="{{ review.id }}" id="review{{ review.id }}">
+          <label class="form-check-label" for="review{{ review.id }}">
             <div class="d-flex justify-content-between">
               <h5>{{ review.song.title }} - {{ review.song.artist }}</h5>
               <div class="rating">
@@ -21,14 +27,21 @@
             {% else %}
               <p class="text-muted"><em>No comment provided</em></p>
             {% endif %}
-          </div>
-        {% endfor %}
+          </label>
+        </div>
       </div>
-      {% else %}
-      <div class="alert alert-info">
-        You haven't added any reviews yet. Search for music to start reviewing!
-      </div>
-      {% endif %}
-</div>
-
-{% endblock %}
+      {% endfor %}
+    </div>
+    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+      <button type="submit" class="btn btn-primary">
+        Share Selected Reviews
+      </button>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    You haven't added any reviews yet. Search for music to start reviewing!
+  </div>
+  {% endif %}
+</form>
+</div> </div> {% endblock %}

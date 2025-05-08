@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, request, flash, session
 from app import app, db
-from app.models import User, Song, Review
+from app.models import User, Song, Review, ReviewShares
 
 @app.route('/')
 @app.route('/index')
@@ -183,9 +183,6 @@ def button():
         return redirect(url_for('index'))
     return render_template("button.html", title="Button!")
 
-    
-
-
 @app.route('/share')
 def share_review():
     if 'username' not in session:
@@ -201,3 +198,32 @@ def share_review():
     return render_template("share.html", title="Share", 
                            user=user,
                            reviews=reviews,)
+
+
+@app.route('/prepare-share', methods=['POST'])
+def prepare_share():
+    if 'username' not in session:
+        return redirect(url_for('index'))
+    
+    # Get selected review IDs from form
+    selected_review_ids = request.form.getlist('selected_reviews')
+    
+    if not selected_review_ids:
+        flash('Please select at least one review to share.')
+        return redirect(url_for('share_review'))
+    
+    # Get full review objects for the selected IDs
+    reviews = []
+    for review_id in selected_review_ids:
+        review = Review.query.get(int(review_id))
+        if review and review.username == session['username']:
+            reviews.append(review)
+    
+    if not reviews:
+        flash('No valid reviews were selected.')
+        return redirect(url_for('share_review'))
+    
+    return render_template('send.html', 
+                           title="Send Reviews", 
+                           selected_reviews=selected_review_ids,
+                           reviews=reviews)
