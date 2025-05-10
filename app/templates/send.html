@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card"> <div class="card-header bg-primary text-white"> <h4><i class="fas fa-paper-plane"></i> Send Reviews</h4> </div> <div class="card-body"> <p>You've selected {{ selected_reviews|length }} review(s) to share. Please enter the username of the person you'd like to share with:</p>
+<form action="{{ url_for('share_reviews') }}" method="POST">
+  {% for review_id in selected_reviews %}
+    <input type="hidden" name="review_ids" value="{{ review_id }}">
+  {% endfor %}
+  
+  <div class="mb-3">
+    <label for="recipient_username" class="form-label">Recipient Username:</label>
+    <div class="input-group">
+      <span class="input-group-text"><i class="fas fa-user"></i></span>
+      <input type="text" class="form-control" id="recipient_username" name="recipient_username" 
+             placeholder="Enter username" required>
+    </div>
+  </div>
+  
+  <div class="d-flex justify-content-between mt-4">
+    <a href="{{ url_for('share_review') }}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left"></i> Back to Selection
+    </a>
+    <button type="submit" class="btn btn-success">
+      <i class="fas fa-paper-plane"></i> Send Reviews
+    </button>
+  </div>
+</form>
+{% endblock %}
