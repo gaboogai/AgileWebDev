@@ -2,15 +2,21 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import os
 from app import app, db, login
+from flask_login import UserMixin
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'app', 'app.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     username = db.Column(db.String(20), primary_key=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     reviews = db.relationship('Review', backref='reviewer', lazy='dynamic')
+
+    def get_id(self):
+        return self.username
+
+        
 
 class Song(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -31,6 +37,5 @@ class ReviewShares(db.Model):
     username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
 
 @login.user_loader
-def load_user(username):
-    return User.query.get(username)
-
+def load_user(user):
+    return User.query.filter_by(username=user).first()

@@ -1,15 +1,13 @@
-from flask import render_template, redirect, url_for, request, flash, session
+from flask import render_template, redirect, url_for, request, flash
+from flask_login import UserMixin
 from app import app, db
 from app.models import User, Song, Review, ReviewShares
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, logout_user, login_required, current_user
 
 @app.route('/')
 @app.route('/index')
 def index():
-    # If user is logged in, redirect to dashboard
-    if 'username' in session:
-        return redirect(url_for('dashboard'))
-    # Otherwise show the login/register page
     return render_template("login.html", title="Welcome to TUN'D")
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -21,7 +19,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
-            session['username'] = username
+            login_user(user)
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password')
@@ -52,15 +50,13 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         
-        session['username'] = username
         return redirect(url_for('dashboard'))
 
+
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    
-    username = session['username']
+    username = current_user.get_id()
     user = User.query.filter_by(username=username).first()
     
     # Get user's reviews
@@ -88,24 +84,20 @@ def dashboard():
 
 @app.route('/logout')
 def logout():
-    session.pop('username', None)
+    logout_user()
     return redirect(url_for('index'))
 
 @app.route('/my-reviews')
+@login_required
 def my_reviews():
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    
-    username = session['username']
+    username = current_user.get_id()
     user_reviews = Review.query.filter_by(username=username).order_by(Review.id.desc()).all()
     
     return render_template('my_reviews.html', title="My Reviews", reviews=user_reviews)
 
 @app.route('/search')
+@login_required
 def search():
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    
     query = request.args.get('q', '')
     results = []
     
@@ -118,9 +110,8 @@ def search():
     return render_template('search.html', title="Search Music", results=results, query=query)
 
 @app.route('/add-song', methods=['POST'])
+@login_required
 def add_song():
-    if 'username' not in session:
-        return redirect(url_for('index'))
     
     artist = request.form['artist']
     title = request.form['title']
@@ -141,16 +132,15 @@ def add_song():
     return redirect(url_for('review', song_id=new_song.id))
 
 @app.route('/review/<int:song_id>', methods=['GET', 'POST'])
+@login_required
 def review(song_id):
-    if 'username' not in session:
-        return redirect(url_for('index'))
     
     song = Song.query.get_or_404(song_id)
     
     if request.method == 'POST':
         rating = int(request.form['rating'])
         comment = request.form['comment']
-        username = session['username']
+        username = current_user.get_id()
         
         # Check if user already reviewed this song
         existing_review = Review.query.filter_by(username=username, song_id=song_id).first()
@@ -170,26 +160,13 @@ def review(song_id):
         
         return redirect(url_for('my_reviews'))
     
-    # Check if user has already reviewed this song
-    existing_review = None
-    if 'username' in session:
-        existing_review = Review.query.filter_by(username=session['username'], song_id=song_id).first()
-    
     return render_template('review.html', title=f"Review - {song.title}", song=song, existing_review=existing_review)
 
-# Keep these legacy routes for backward compatibility
-@app.route('/button')
-def button():
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    return render_template("button.html", title="Button!")
-
 @app.route('/share')
+@login_required
 def share_review():
-    if 'username' not in session:
-        return redirect(url_for('index'))
     
-    username = session['username']
+    username = current_user.get_id()
     user = User.query.filter_by(username=username).first()
     
     # Get recent reviews
@@ -202,9 +179,8 @@ def share_review():
 
 
 @app.route('/prepare-share', methods=['POST'])
+@login_required
 def prepare_share():
-    if 'username' not in session:
-        return redirect(url_for('index'))
     
     # Get selected review IDs from form
     selected_review_ids = request.form.getlist('selected_reviews')
@@ -217,7 +193,7 @@ def prepare_share():
     reviews = []
     for review_id in selected_review_ids:
         review = Review.query.get(int(review_id))
-        if review and review.username == session['username']:
+        if review and review.username == current_user.get_id():
             reviews.append(review)
     
     if not reviews:
@@ -230,10 +206,8 @@ def prepare_share():
                            reviews=reviews)
 
 @app.route('/share-reviews', methods=['POST'])
+@login_required
 def share_reviews():
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    
     review_ids = request.form.getlist('review_ids')
     recipient_username = request.form.get('recipient_username')
     
@@ -248,7 +222,7 @@ def share_reviews():
     
     for review_id in review_ids:
         review = Review.query.get(int(review_id))
-        if review and review.username == session['username']:
+        if review and review.username == current_user.get_id():
             existing_share = ReviewShares.query.filter_by(review_id=review.id, username=recipient_username).first()
             
             if not existing_share:
@@ -260,11 +234,9 @@ def share_reviews():
 
 
 @app.route('/shared-reviews')
+@login_required
 def shared_reviews():
-    if 'username' not in session:
-        return redirect(url_for('index'))
-    
-    username = session['username']
+    username = current_user.get_id()
     
     shared_reviews = db.session.query(Review).\
         join(ReviewShares, Review.id == ReviewShares.review_id).\
