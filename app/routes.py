@@ -256,3 +256,23 @@ def share_reviews():
     
     db.session.commit()
     return redirect(url_for('share_review'))
+
+
+@app.route('/shared-reviews')
+def shared_reviews():
+    if 'username' not in session:
+        return redirect(url_for('index'))
+    
+    username = session['username']
+    
+    shared_reviews = db.session.query(Review).\
+        join(ReviewShares, Review.id == ReviewShares.review_id).\
+        filter(ReviewShares.username == username).all()
+    
+    for review in shared_reviews:
+        review.song_details = Song.query.get(review.song_id)
+    
+    return render_template('shared_reviews.html', 
+                           title="Reviews Shared With Me", 
+                           shared_reviews=shared_reviews)
+
