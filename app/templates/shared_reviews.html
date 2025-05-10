@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h2><i class="fas fa-share-alt"></i> Reviews Shared With Me</h2>
+  </div>
+  <div class="card-body">
+    {% if shared_reviews %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Song</th>
+              <th>Artist</th>
+              <th>Rating</th>
+              <th>Review</th>
+              <th>Reviewer</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for review in shared_reviews %}
+              <tr>
+                <td>{{ review.song.title }}</td>
+                <td>{{ review.song.artist }}</td>
+                <td>
+                  <div class="rating-display">
+                    {% for i in range(1, 6) %}
+                      {% if i <= review.rating %}
+                        <i class="fas fa-star text-warning"></i>
+                      {% else %}
+                        <i class="far fa-star"></i>
+                      {% endif %}
+                    {% endfor %}
+                    ({{ review.rating }}/5)
+                  </div>
+                </td>
+                <td>{{ review.comment }}</td>
+                <td>{{ review.reviewer.username }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="alert alert-info">
+        <p>No reviews have been shared with you yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
