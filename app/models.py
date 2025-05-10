@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import os
-from app import app, db
+from app import app, db, login
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'app', 'app.db')
@@ -29,4 +29,8 @@ class ReviewShares(db.Model):
     share_id = db.Column(db.Integer, primary_key=True)
     review_id = db.Column(db.Integer, db.ForeignKey('review.id'), nullable=False)
     username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
+
+@login.user_loader
+def load_user(username):
+    return User.query.get(username)
 
