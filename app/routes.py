@@ -1,6 +1,7 @@
 from flask import render_template, redirect, url_for, request, flash, session
 from app import app, db
 from app.models import User, Song, Review, ReviewShares
+from werkzeug.security import generate_password_hash, check_password_hash
 
 @app.route('/')
 @app.route('/index')
@@ -19,7 +20,7 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        if user and user.password == password:
+        if user and check_password_hash(user.password, password):
             session['username'] = username
             return redirect(url_for('dashboard'))
         else:
@@ -47,7 +48,7 @@ def register():
             return redirect(url_for('index'))
         
         # Create new user
-        new_user = User(username=username, password=password)
+        new_user = User(username=username, password=generate_password_hash(password))
         db.session.add(new_user)
         db.session.commit()
         
