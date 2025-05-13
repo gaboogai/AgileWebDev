@@ -22,7 +22,7 @@
           <p class="subtitle">Your personal music rating platform</p>
         </div>
         <div class="user-info">
-          <span>Welcome, {{ session.username }}</span>
+          <span>Welcome, {{ current_user.get_id() }}</span>
           <a href="/logout" class="btn btn-outline-danger btn-sm ms-2">
             <i class="fas fa-sign-out-alt"></i> Logout
           </a>

@@ -4,6 +4,7 @@ from app import app, db
 from app.models import User, Song, Review, ReviewShares
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
+from flask_wtf import FlaskForm
 
 @app.route('/')
 @app.route('/index')
@@ -204,13 +205,19 @@ def prepare_share():
     return render_template('send.html', 
                            title="Send Reviews", 
                            selected_reviews=selected_review_ids,
-                           reviews=reviews)
+                           reviews=reviews,
+                           form=FlaskForm())
 
 @app.route('/share-reviews', methods=['POST'])
 @login_required
 def share_reviews():
     review_ids = request.form.getlist('review_ids')
     recipient_username = request.form.get('recipient_username')
+
+    form = FlaskForm()
+    if not form.validate_on_submit():
+        flash('Invalid form submission. Please try again.')
+        return redirect(url_for('share_review'))
     
     if not review_ids or not recipient_username:
         flash('Missing information. Please try again.')
@@ -231,6 +238,7 @@ def share_reviews():
                 db.session.add(new_share)
     
     db.session.commit()
+    flash('Reviews shared successfully!')
     return redirect(url_for('share_review'))
 
 

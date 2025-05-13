@@ -12,7 +12,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(20), primary_key=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     reviews = db.relationship('Review', backref='reviewer', lazy='dynamic')
-
+    
     def get_id(self):
         return self.username
 
