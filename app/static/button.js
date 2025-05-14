@@ -9,7 +9,7 @@ text = "";
 }
 document.getElementById("textBox").innerHTML = text;
 
-fetch('/log_button_press', {
+fetch('/button', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
