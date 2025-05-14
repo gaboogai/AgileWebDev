@@ -5,6 +5,7 @@ from app.models import User, Song, Review, ReviewShares
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
+from app.forms import ReviewSendForm
 
 @app.route('/')
 @app.route('/index')
@@ -138,6 +139,7 @@ def add_song():
 def review(song_id):
     
     song = Song.query.get_or_404(song_id)
+    existing_review = None
     
     if request.method == 'POST':
         rating = int(request.form['rating'])
@@ -164,84 +166,6 @@ def review(song_id):
     
     return render_template('review.html', title=f"Review - {song.title}", song=song, existing_review=existing_review)
 
-@app.route('/share')
-@login_required
-def share_review():
-    
-    username = current_user.get_id()
-    user = User.query.filter_by(username=username).first()
-    
-    # Get recent reviews
-    reviews = Review.query.filter_by(username=username).order_by(Review.id.desc()).all()
-    
-    
-    return render_template("share.html", title="Share", 
-                           user=user,
-                           reviews=reviews,)
-
-
-@app.route('/prepare-share', methods=['POST'])
-@login_required
-def prepare_share():
-    
-    # Get selected review IDs from form
-    selected_review_ids = request.form.getlist('selected_reviews')
-    
-    if not selected_review_ids:
-        flash('Please select at least one review to share.')
-        return redirect(url_for('share_review'))
-    
-    # Get full review objects for the selected IDs
-    reviews = []
-    for review_id in selected_review_ids:
-        review = Review.query.get(int(review_id))
-        if review and review.username == current_user.get_id():
-            reviews.append(review)
-    
-    if not reviews:
-        flash('No valid reviews were selected.')
-        return redirect(url_for('share_review'))
-    
-    return render_template('send.html', 
-                           title="Send Reviews", 
-                           selected_reviews=selected_review_ids,
-                           reviews=reviews,
-                           form=FlaskForm())
-
-@app.route('/share-reviews', methods=['POST'])
-@login_required
-def share_reviews():
-    review_ids = request.form.getlist('review_ids')
-    recipient_username = request.form.get('recipient_username')
-
-    form = FlaskForm()
-    if not form.validate_on_submit():
-        flash('Invalid form submission. Please try again.')
-        return redirect(url_for('share_review'))
-    
-    if not review_ids or not recipient_username:
-        flash('Missing information. Please try again.')
-        return redirect(url_for('share_review'))
-    
-    recipient = User.query.filter_by(username=recipient_username).first()
-    if not recipient:
-        flash(f'User "{recipient_username}" does not exist.')
-        return redirect(url_for('prepare_share'))
-    
-    for review_id in review_ids:
-        review = Review.query.get(int(review_id))
-        if review and review.username == current_user.get_id():
-            existing_share = ReviewShares.query.filter_by(review_id=review.id, username=recipient_username).first()
-            
-            if not existing_share:
-                new_share = ReviewShares(review_id=review.id, username=recipient_username)
-                db.session.add(new_share)
-    
-    db.session.commit()
-    flash('Reviews shared successfully!')
-    return redirect(url_for('share_review'))
-
-
 @app.route('/shared-reviews')
 @login_required
 def shared_reviews():
@@ -258,3 +182,28 @@ def shared_reviews():
                            title="Reviews Shared With Me", 
                            shared_reviews=shared_reviews)
 
+
+@app.route('/share', methods=['GET', 'POST'])
+@login_required
+def share():
+    username = current_user.get_id()
+    user = User.query.filter_by(username=username).first()
+    
+    reviews = Review.query.filter_by(username=username).order_by(Review.id.desc()).all()
+
+    form = ReviewSendForm()
+    form.review.choices = [(review.id, f"{review.song.title} - {review.rating}") for review in reviews]
+
+    if form.validate_on_submit():
+        print(form.review.data)
+        print(form.recipient_username.data)
+        new_share = ReviewShares(review_id=form.review.data, username=form.recipient_username.data)
+        db.session.add(new_share)
+        db.session.commit()
+        flash('Review shared successfully!')
+        return redirect(url_for('share'))
+    
+    return render_template("share.html", title="Share", 
+                           user=user,
+                           reviews=reviews,
+                           form=form)
