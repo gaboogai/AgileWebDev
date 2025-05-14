@@ -28,3 +28,14 @@ class ReviewSendForm(FlaskForm):
     recipient_username = StringField('Recipient Username', validators=[DataRequired(message="Please enter a recipient username.")])
     review = SelectField('Choose a Review', choices = [])
     submit = SubmitField('Send Reviews')
+
+class SearchForm(FlaskForm):
+    """Form for searching songs and artists"""
+    query = StringField('Search', validators=[DataRequired(message="Please enter a search term.")])
+    submit = SubmitField('Search')
+
+class AddSongForm(FlaskForm):
+    """Form for adding a new song"""
+    artist = StringField('Artist', validators=[DataRequired(message="Please enter the artist name.")])
+    title = StringField('Song Title', validators=[DataRequired(message="Please enter the song title.")])
+    submit = SubmitField('Add Song')
