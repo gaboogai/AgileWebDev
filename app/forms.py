@@ -39,3 +39,17 @@ class AddSongForm(FlaskForm):
     artist = StringField('Artist', validators=[DataRequired(message="Please enter the artist name.")])
     title = StringField('Song Title', validators=[DataRequired(message="Please enter the song title.")])
     submit = SubmitField('Add Song')
+
+class ReviewForm(FlaskForm):
+    """Form for submitting song reviews"""
+    rating = SelectField('Your Rating (1-5 stars)', 
+                        choices=[
+                            ('5', '★★★★★ (5 stars)'),
+                            ('4', '★★★★☆ (4 stars)'),
+                            ('3', '★★★☆☆ (3 stars)'),
+                            ('2', '★★☆☆☆ (2 stars)'),
+                            ('1', '★☆☆☆☆ (1 star)')
+                        ],
+                        validators=[DataRequired(message="Please select a rating.")])
+    comment = StringField('Your Comments (optional)')
+    submit = SubmitField('Submit Review')

@@ -5,7 +5,7 @@ from app.models import User, Song, Review, ReviewShares
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
-from app.forms import ReviewSendForm, LoginForm, RegistrationForm, SearchForm, AddSongForm
+from app.forms import ReviewSendForm, LoginForm, RegistrationForm, SearchForm, AddSongForm, ReviewForm
 
 @app.route('/')
 @app.route('/index')
@@ -155,17 +155,22 @@ def add_song():
 @app.route('/review/<int:song_id>', methods=['GET', 'POST'])
 @login_required
 def review(song_id):
-    
     song = Song.query.get_or_404(song_id)
-    existing_review = None
+    form = ReviewForm()
     
-    if request.method == 'POST':
-        rating = int(request.form['rating'])
-        comment = request.form['comment']
+    # Check if user already has a review for this song
+    existing_review = Review.query.filter_by(username=current_user.get_id(), song_id=song_id).first()
+    
+    # Pre-populate form if review exists
+    if existing_review and request.method == 'GET':
+        form.rating.data = str(existing_review.rating)
+        form.comment.data = existing_review.comment
+        form.submit.label.text = 'Update Review'
+    
+    if form.validate_on_submit():
+        rating = int(form.rating.data)
+        comment = form.comment.data
         username = current_user.get_id()
-        
-        # Check if user already reviewed this song
-        existing_review = Review.query.filter_by(username=username, song_id=song_id).first()
         
         if existing_review:
             # Update existing review
@@ -182,7 +187,7 @@ def review(song_id):
         
         return redirect(url_for('my_reviews'))
     
-    return render_template('review.html', title=f"Review - {song.title}", song=song, existing_review=existing_review)
+    return render_template('review.html', title=f"Review - {song.title}", song=song, form=form)
 
 @app.route('/shared-reviews')
 @login_required
