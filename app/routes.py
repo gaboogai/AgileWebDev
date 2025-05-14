@@ -276,3 +276,20 @@ def shared_reviews():
                            title="Reviews Shared With Me", 
                            shared_reviews=shared_reviews)
 
+@app.route('/search-suggestions')
+def search_suggestions():
+    if 'username' not in session:
+        return {'suggestions': []}
+    
+    query = request.args.get('q', '')
+    suggestions = []
+    
+    if query:
+        # Search for songs by title or artist
+        songs = Song.query.filter(
+            (Song.title.ilike(f'%{query}%')) | (Song.artist.ilike(f'%{query}%'))
+        ).limit(5).all()
+        
+        suggestions = [{'title': song.title, 'artist': song.artist} for song in songs]
+    
+    return {'suggestions': suggestions}
