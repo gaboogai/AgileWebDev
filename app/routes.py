@@ -1,6 +1,7 @@
-from flask import render_template, redirect, url_for, request, flash, session
+from flask import render_template, redirect, url_for, request, flash, session, jsonify
 from app import app, db
 from app.models import User, Song, Review, ReviewShares
+import datetime
 
 @app.route('/')
 @app.route('/index')
@@ -293,3 +294,8 @@ def search_suggestions():
         suggestions = [{'title': song.title, 'artist': song.artist} for song in songs]
     
     return {'suggestions': suggestions}
+
+@app.route('/current-time')
+def current_time():
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return jsonify({'time': now})

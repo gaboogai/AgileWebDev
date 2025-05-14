@@ -79,5 +79,14 @@
         </div>
       </div>
     </div>
+    <span id="currentTime"></span>
+    <script>
+      function updateTime() {
+          fetch('/current-time')
+              .then(response => response.json())
+              .then(data => {
+                  document.getElementById('currentTime').textContent = data.time;
+              });
+      }
   </body>
 </html>
