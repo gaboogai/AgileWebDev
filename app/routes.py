@@ -5,7 +5,7 @@ from app.models import User, Song, Review, ReviewShares
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
-from app.forms import ReviewSendForm, LoginForm, RegistrationForm
+from app.forms import ReviewSendForm, LoginForm, RegistrationForm, SearchForm, AddSongForm
 
 @app.route('/')
 @app.route('/index')
@@ -96,41 +96,61 @@ def my_reviews():
     
     return render_template('my_reviews.html', title="My Reviews", reviews=user_reviews)
 
-@app.route('/search')
+@app.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
-    query = request.args.get('q', '')
-    results = []
+    search_form = SearchForm()
+    add_song_form = AddSongForm()
     
+    if search_form.validate_on_submit():
+        return redirect(url_for('search', q=search_form.query.data))
+    
+    query = request.args.get('q', '')
     if query:
+        # Set the form field value to the query parameter
+        search_form.query.data = query
+        
         # Search for songs by title or artist
         results = Song.query.filter(
             (Song.title.ilike(f'%{query}%')) | (Song.artist.ilike(f'%{query}%'))
         ).all()
+    else:
+        results = []
     
-    return render_template('search.html', title="Search Music", results=results, query=query)
+    return render_template('search.html', 
+                          title="Search Music", 
+                          search_form=search_form, 
+                          add_song_form=add_song_form,
+                          results=results, 
+                          query=query)
 
 @app.route('/add-song', methods=['POST'])
 @login_required
 def add_song():
+    add_song_form = AddSongForm()
     
-    artist = request.form['artist']
-    title = request.form['title']
+    if add_song_form.validate_on_submit():
+        artist = add_song_form.artist.data
+        title = add_song_form.title.data
+        
+        # Check if song exists
+        existing_song = Song.query.filter_by(title=title, artist=artist).first()
+        
+        if existing_song:
+            flash('This song already exists')
+            return redirect(url_for('search', q=artist))
+        
+        # Create new song
+        new_song = Song(title=title, artist=artist)
+        db.session.add(new_song)
+        db.session.commit()
+        
+        flash('Song added successfully! Now you can review it.')
+        return redirect(url_for('review', song_id=new_song.id))
     
-    # Check if song exists
-    existing_song = Song.query.filter_by(title=title, artist=artist).first()
-    
-    if existing_song:
-        flash('This song already exists')
-        return redirect(url_for('search', q=artist))
-    
-    # Create new song
-    new_song = Song(title=title, artist=artist)
-    db.session.add(new_song)
-    db.session.commit()
-    
-    flash('Song added successfully! Now you can review it.')
-    return redirect(url_for('review', song_id=new_song.id))
+    # If validation fails, redirect back to search with the form errors
+    flash('Please fill in all the required fields')
+    return redirect(url_for('search'))
 
 @app.route('/review/<int:song_id>', methods=['GET', 'POST'])
 @login_required
