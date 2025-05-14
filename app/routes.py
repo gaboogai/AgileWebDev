@@ -5,18 +5,21 @@ from app.models import User, Song, Review, ReviewShares
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
-from app.forms import ReviewSendForm
+from app.forms import ReviewSendForm, LoginForm, RegistrationForm
 
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template("login.html", title="Welcome to TUN'D")
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    form = LoginForm()
+    register_form = RegistrationForm()
+    
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
         
         user = User.query.filter_by(username=username).first()
         
@@ -25,27 +28,17 @@ def login():
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password')
-            return redirect(url_for('index'))
+            return redirect(url_for('login'))
     
-    return redirect(url_for('index'))
+    return render_template("login.html", title="Welcome to TUN'D", form=form, register_form=register_form)
 
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        username = request.form['new_username']
-        password = request.form['new_password']
-        confirm_password = request.form['confirm_password']
-        
-        # Check if passwords match
-        if password != confirm_password:
-            flash('Passwords do not match')
-            return redirect(url_for('index'))
-        
-        # Check if username already exists
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            flash('Username already exists')
-            return redirect(url_for('index'))
+    form = RegistrationForm()
+    
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
         
         # Create new user
         new_user = User(username=username, password=generate_password_hash(password))
@@ -53,7 +46,12 @@ def register():
         db.session.commit()
 
         login_user(new_user)
+        flash('Account created successfully!')
         return redirect(url_for('dashboard'))
+    
+    # If validation fails, redirect to login page with registration form
+    login_form = LoginForm()
+    return render_template('login.html', title="Welcome to TUN'D", form=login_form, register_form=form)
 
 
 @app.route('/dashboard')
