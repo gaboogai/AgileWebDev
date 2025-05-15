@@ -23,11 +23,11 @@ echo "Running basic tests (test_app.py and test_advanced.py)..."
 python -m pytest -v test_app.py test_advanced.py -s --html=report_basic_tests.html
 
 # Run the fixed test files
-echo "Running dashboard and navigation tests (fixed_test_dashboard_navigation.py)..."
-python -m pytest -v fixed_test_dashboard_navigation.py -s --html=report_dashboard_navigation.html
+echo "Running dashboard and navigation tests (test_dashboard_navigation.py)..."
+python -m pytest -v test_dashboard_navigation.py -s --html=report_dashboard_navigation.html
 
-echo "Running advanced user scenarios tests (fixed_test_advanced_scenarios.py)..."
-python -m pytest -v fixed_test_advanced_scenarios.py -s --html=report_advanced_scenarios.html
+echo "Running advanced user scenarios tests (test_advanced_scenarios.py)..."
+python -m pytest -v test_advanced_scenarios.py -s --html=report_advanced_scenarios.html
 
 # Run song management and review functionality tests
 echo "Running song management tests (test_song_management.py)..."
