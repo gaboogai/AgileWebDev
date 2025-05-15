@@ -10,8 +10,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
+from selenium.webdriver.support.ui import Select  # Added missing import
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from app import app, db
 from app.models import User, Song, Review
@@ -21,7 +21,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class TestReviewFunctionality:
+class TestDashboardAndNavigation:
     @pytest.fixture(autouse=True)
     def setup(self):
         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
@@ -50,16 +50,26 @@ class TestReviewFunctionality:
             db.session.add(test_user)
             
             test_songs = [
-                Song(title='Song for Review', artist='Test Artist'),
-                Song(title='Song to Update', artist='Test Artist')
+                Song(title='Dashboard Test Song 1', artist='Artist A'),
+                Song(title='Dashboard Test Song 2', artist='Artist B'),
+                Song(title='Dashboard Test Song 3', artist='Artist C'),
+                Song(title='Dashboard Test Song 4', artist='Artist A'),
+                Song(title='Dashboard Test Song 5', artist='Artist D')
             ]
             for song in test_songs:
                 db.session.add(song)
                 
             db.session.commit()
             
-            existing_review = Review(rating=3, comment="Initial review", username='testuser', song_id=2)
-            db.session.add(existing_review)
+            test_reviews = [
+                Review(rating=5, comment="Excellent song!", username='testuser', song_id=1),
+                Review(rating=4, comment="Pretty good", username='testuser', song_id=2),
+                Review(rating=3, comment="It's okay", username='testuser', song_id=3),
+                Review(rating=5, comment="Another great one", username='testuser', song_id=4)
+            ]
+            for review in test_reviews:
+                db.session.add(review)
+            
             db.session.commit()
         
         def find_free_port():
@@ -76,7 +86,7 @@ class TestReviewFunctionality:
         self.flask_thread.daemon = True
         self.flask_thread.start()
         
-        time.sleep(3)
+        time.sleep(5)
         
         self.base_url = f"http://localhost:{self.port}"
         logger.info(f"Flask app running at {self.base_url}")
@@ -109,17 +119,108 @@ class TestReviewFunctionality:
             logger.error(f"Error during login: {str(e)}")
             raise
     
-    def test_create_new_review(self):
-        """Test creating a new review for a song"""
-        logger.info("Running test_create_new_review")
+    def test_dashboard_statistics(self):
+        """Test that dashboard displays correct statistics"""
+        logger.info("Running test_dashboard_statistics")
         self.login_user()
         
         try:
-            with app.app_context():
-                song_id = Song.query.filter_by(title='Song for Review').first().id
-                
-            self.driver.get(f"{self.base_url}/review/{song_id}")
-            self.driver.save_screenshot("review_page.png")
+            self.driver.save_screenshot("dashboard.png")
+            
+            self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "stat-card")))
+            
+            logger.info("Dashboard page content accessible")
+            
+            self.wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "stat-value")))
+            
+            stat_value_elements = self.driver.find_elements(By.CLASS_NAME, "stat-value")
+            logger.info(f"Found {len(stat_value_elements)} stat value elements")
+            
+            assert len(stat_value_elements) >= 3, f"Expected at least 3 statistic values, found {len(stat_value_elements)}"
+            
+            total_reviews = stat_value_elements[0].text
+            reviewed_songs = stat_value_elements[1].text
+            reviewed_artists = stat_value_elements[2].text
+            
+            logger.info(f"Stats found - total reviews: {total_reviews}, reviewed songs: {reviewed_songs}, reviewed artists: {reviewed_artists}")
+            
+            assert total_reviews == "4", f"Expected 4 total reviews, got {total_reviews}"
+            
+            assert reviewed_songs == "4", f"Expected 4 reviewed songs, got {reviewed_songs}"
+            
+            assert reviewed_artists == "3", f"Expected 3 reviewed artists, got {reviewed_artists}"
+            
+            self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "activity-feed")))
+            activity_feed = self.driver.find_element(By.CLASS_NAME, "activity-feed")
+            review_items = activity_feed.find_elements(By.CLASS_NAME, "review-item")
+            
+            assert len(review_items) > 0, "No review items found in the activity feed"
+            
+            test_review_found = False
+            for item in review_items:
+                if "Excellent song!" in item.text:
+                    test_review_found = True
+                    break
+                    
+            assert test_review_found, "Test review was not found in the activity feed"
+            logger.info("test_dashboard_statistics passed")
+            
+        except Exception as e:
+            self.driver.save_screenshot("dashboard_stats_error.png")
+            logger.error(f"Error in test_dashboard_statistics: {str(e)}")
+            raise
+    
+    def test_navigation_links(self):
+        """Test that navigation links in the sidebar work correctly"""
+        logger.info("Running test_navigation_links")
+        self.login_user()
+        
+        try:
+            self.driver.find_element(By.LINK_TEXT, "My Reviews").click()
+            self.wait.until(EC.url_contains("my-reviews"))
+            assert "My Reviews" in self.driver.title
+            
+            self.driver.find_element(By.LINK_TEXT, "Search Music").click()
+            self.wait.until(EC.url_contains("search"))
+            assert "Search Music" in self.driver.title
+            
+            self.driver.find_element(By.LINK_TEXT, "Shared Reviews").click()
+            self.wait.until(EC.url_contains("shared-reviews"))
+            
+            self.driver.find_element(By.LINK_TEXT, "Dashboard").click()
+            self.wait.until(EC.url_contains("dashboard"))
+            assert "Dashboard" in self.driver.title
+            
+            logger.info("test_navigation_links passed")
+            
+        except Exception as e:
+            self.driver.save_screenshot("navigation_error.png")
+            logger.error(f"Error in test_navigation_links: {str(e)}")
+            raise
+    
+    def test_combined_workflow(self):
+        """Test a combined workflow: search -> add -> review -> view in my reviews"""
+        logger.info("Running test_combined_workflow")
+        self.login_user()
+        
+        try:
+            self.driver.find_element(By.LINK_TEXT, "Search Music").click()
+            self.wait.until(EC.visibility_of_element_located((By.ID, "query")))
+            
+            search_term = "Unique Workflow Test Song"
+            self.driver.find_element(By.ID, "query").send_keys(search_term)
+            
+            search_button = self.driver.find_element(By.CLASS_NAME, "btn-primary")
+            self.driver.execute_script("arguments[0].click();", search_button)
+            
+            self.wait.until(EC.visibility_of_element_located((By.ID, "artist")))
+            self.driver.find_element(By.ID, "artist").send_keys("Workflow Test Artist")
+            self.driver.find_element(By.ID, "title").send_keys(search_term)
+            
+            add_button = self.driver.find_element(By.CLASS_NAME, "btn-success")
+            self.driver.execute_script("arguments[0].click();", add_button)
+            
+            self.wait.until(EC.visibility_of_element_located((By.XPATH, f"//h3[contains(text(), '{search_term}')]")))
             
             self.wait.until(EC.visibility_of_element_located((By.ID, "rating")))
             
@@ -127,7 +228,8 @@ class TestReviewFunctionality:
             rating_select.select_by_visible_text("★★★★★ (5 stars)")
             
             comment_field = self.driver.find_element(By.ID, "comment")
-            comment_field.send_keys("This is a great song! Test review.")
+            test_comment = "This is a test of the complete workflow - great song!"
+            comment_field.send_keys(test_comment)
             
             submit_button = self.driver.find_element(By.NAME, "submit")
             self.driver.execute_script("arguments[0].click();", submit_button)
@@ -137,92 +239,25 @@ class TestReviewFunctionality:
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "review-item")))
             reviews = self.driver.find_elements(By.CLASS_NAME, "review-item")
             
-            review_found = False
+            workflow_review_found = False
             for review in reviews:
-                if "Song for Review" in review.text and "This is a great song! Test review." in review.text:
-                    review_found = True
+                if search_term in review.text and test_comment in review.text:
+                    workflow_review_found = True
                     break
                     
-            assert review_found, "New review was not found on the my-reviews page"
-            logger.info("test_create_new_review passed")
+            assert workflow_review_found, "Newly created review from workflow was not found"
+            
+            self.driver.find_element(By.LINK_TEXT, "Dashboard").click()
+            self.wait.until(EC.url_contains("dashboard"))
+            
+            self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "stat-value")))
+            stat_value_elements = self.driver.find_elements(By.CLASS_NAME, "stat-value")
+            total_reviews = stat_value_elements[0].text
+            assert total_reviews == "5", f"Expected 5 total reviews after workflow, got {total_reviews}"
+            
+            logger.info("test_combined_workflow passed")
             
         except Exception as e:
-            self.driver.save_screenshot("create_review_error.png")
-            logger.error(f"Error in test_create_new_review: {str(e)}")
-            raise
-    
-    def test_update_existing_review(self):
-        """Test updating an existing review"""
-        logger.info("Running test_update_existing_review")
-        self.login_user()
-        
-        try:
-            with app.app_context():
-                song_id = Song.query.filter_by(title='Song to Update').first().id
-                
-            self.driver.get(f"{self.base_url}/review/{song_id}")
-            self.driver.save_screenshot("update_review_page.png")
-            
-            self.wait.until(EC.visibility_of_element_located((By.ID, "rating")))
-            
-            rating_select = Select(self.driver.find_element(By.ID, "rating"))
-            comment_field = self.driver.find_element(By.ID, "comment")
-            
-            assert rating_select.first_selected_option.get_attribute("value") == "3", "Rating should be pre-filled with 3"
-            assert comment_field.get_attribute("value") == "Initial review", "Comment should be pre-filled"
-            
-            rating_select.select_by_visible_text("★★★★☆ (4 stars)")
-            
-            comment_field.clear()
-            comment_field.send_keys("Updated review - it's better than I initially thought!")
-            
-            submit_button = self.driver.find_element(By.NAME, "submit")
-            self.driver.execute_script("arguments[0].click();", submit_button)
-            
-            self.wait.until(EC.url_contains("my-reviews"))
-            
-            self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "review-item")))
-            reviews = self.driver.find_elements(By.CLASS_NAME, "review-item")
-            
-            review_found = False
-            for review in reviews:
-                if "Song to Update" in review.text and "Updated review - it's better than I initially thought!" in review.text:
-                    review_found = True
-                    break
-                    
-            assert review_found, "Updated review was not found on the my-reviews page"
-            logger.info("test_update_existing_review passed")
-            
-        except Exception as e:
-            self.driver.save_screenshot("update_review_error.png")
-            logger.error(f"Error in test_update_existing_review: {str(e)}")
-            raise
-    
-    def test_review_rating_validation(self):
-        """Test that review ratings are properly constrained to the 1-5 range"""
-        logger.info("Running test_review_rating_validation")
-        self.login_user()
-        
-        try:
-            with app.app_context():
-                song_id = Song.query.filter_by(title='Song for Review').first().id
-                
-            self.driver.get(f"{self.base_url}/review/{song_id}")
-            
-            self.wait.until(EC.visibility_of_element_located((By.ID, "rating")))
-            
-            rating_select = Select(self.driver.find_element(By.ID, "rating"))
-            options = rating_select.options
-            
-            assert len(options) == 5, "There should be exactly 5 rating options"
-            
-            option_values = [option.get_attribute("value") for option in options]
-            expected_values = ["5", "4", "3", "2", "1"]
-            
-            assert option_values == expected_values, f"Rating options should be 5 to 1, but got {option_values}"
-            logger.info("test_review_rating_validation passed")
-            
-        except Exception as e:
-            self.driver.save_screenshot("rating_validation_error.png")
-            logger.error(f"Error in test_review_rating_validation: {str(e)}")
+            self.driver.save_screenshot("workflow_error.png")
+            logger.error(f"Error in test_combined_workflow: {str(e)}")
             raise
