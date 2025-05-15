@@ -18,21 +18,18 @@ from app.models import User, Song, Review
 from werkzeug.security import generate_password_hash
 import logging
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class TestReviewFunctionality:
     @pytest.fixture(autouse=True)
     def setup(self):
-        # Create a temporary file to isolate the database for each test
         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
         app.config['TESTING'] = True
-        app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for testing
+        app.config['WTF_CSRF_ENABLED'] = False
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE']
         app.config['SECRET_KEY'] = 'test_secret_key'
         
-        # Set up Chrome options
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
@@ -42,17 +39,13 @@ class TestReviewFunctionality:
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--disable-infobars")
         
-        # Setup WebDriver
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         self.wait = WebDriverWait(self.driver, 20)
         
-        # Create the database and the database tables
         with app.app_context():
-            # Drop all tables first to ensure a clean state
             db.drop_all()
             db.create_all()
             
-            # Add test data
             test_user = User(username='testuser', password=generate_password_hash('testpassword'))
             db.session.add(test_user)
             
@@ -65,12 +58,10 @@ class TestReviewFunctionality:
                 
             db.session.commit()
             
-            # Add an existing review for the second song to test updating
             existing_review = Review(rating=3, comment="Initial review", username='testuser', song_id=2)
             db.session.add(existing_review)
             db.session.commit()
         
-        # Find a free port for the Flask app
         def find_free_port():
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('', 0))
@@ -78,7 +69,6 @@ class TestReviewFunctionality:
                 
         self.port = find_free_port()
         
-        # Start Flask app in a separate thread
         def run_flask_app():
             app.run(port=self.port, use_reloader=False)
             
@@ -86,16 +76,13 @@ class TestReviewFunctionality:
         self.flask_thread.daemon = True
         self.flask_thread.start()
         
-        # Give the app time to start
         time.sleep(3)
         
-        # Set the base URL with the dynamic port
         self.base_url = f"http://localhost:{self.port}"
         logger.info(f"Flask app running at {self.base_url}")
         
         yield
         
-        # Teardown
         self.driver.quit()
         os.close(self.db_fd)
         os.unlink(app.config['DATABASE'])
@@ -106,18 +93,14 @@ class TestReviewFunctionality:
         self.driver.get(f"{self.base_url}/login")
         
         try:
-            # Wait for username field to be visible
             self.wait.until(EC.visibility_of_element_located((By.ID, "username")))
             
-            # Fill out login form
             self.driver.find_element(By.ID, "username").send_keys("testuser")
             self.driver.find_element(By.ID, "password").send_keys("testpassword")
             
-            # Use JavaScript to click the submit button
             submit_button = self.driver.find_element(By.NAME, "submit")
             self.driver.execute_script("arguments[0].click();", submit_button)
             
-            # Wait for redirection to dashboard
             self.wait.until(EC.url_contains("dashboard"))
             logger.info("Successfully logged in")
             
@@ -132,32 +115,25 @@ class TestReviewFunctionality:
         self.login_user()
         
         try:
-            # Navigate directly to the review page for the first song
             with app.app_context():
                 song_id = Song.query.filter_by(title='Song for Review').first().id
                 
             self.driver.get(f"{self.base_url}/review/{song_id}")
             self.driver.save_screenshot("review_page.png")
             
-            # Wait for the review form to load
             self.wait.until(EC.visibility_of_element_located((By.ID, "rating")))
             
-            # Select 5-star rating
             rating_select = Select(self.driver.find_element(By.ID, "rating"))
             rating_select.select_by_visible_text("★★★★★ (5 stars)")
             
-            # Enter a comment
             comment_field = self.driver.find_element(By.ID, "comment")
             comment_field.send_keys("This is a great song! Test review.")
             
-            # Submit the review
             submit_button = self.driver.find_element(By.NAME, "submit")
             self.driver.execute_script("arguments[0].click();", submit_button)
             
-            # Verify we're redirected to my reviews page
             self.wait.until(EC.url_contains("my-reviews"))
             
-            # Check if our new review is displayed
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "review-item")))
             reviews = self.driver.find_elements(By.CLASS_NAME, "review-item")
             
@@ -181,38 +157,30 @@ class TestReviewFunctionality:
         self.login_user()
         
         try:
-            # Navigate directly to the review page for the second song (which already has a review)
             with app.app_context():
                 song_id = Song.query.filter_by(title='Song to Update').first().id
                 
             self.driver.get(f"{self.base_url}/review/{song_id}")
             self.driver.save_screenshot("update_review_page.png")
             
-            # Wait for the review form to load (should be pre-populated)
             self.wait.until(EC.visibility_of_element_located((By.ID, "rating")))
             
-            # Verify form is pre-filled with existing review data
             rating_select = Select(self.driver.find_element(By.ID, "rating"))
             comment_field = self.driver.find_element(By.ID, "comment")
             
             assert rating_select.first_selected_option.get_attribute("value") == "3", "Rating should be pre-filled with 3"
             assert comment_field.get_attribute("value") == "Initial review", "Comment should be pre-filled"
             
-            # Change the rating to 4 stars
             rating_select.select_by_visible_text("★★★★☆ (4 stars)")
             
-            # Update the comment
             comment_field.clear()
             comment_field.send_keys("Updated review - it's better than I initially thought!")
             
-            # Submit the updated review
             submit_button = self.driver.find_element(By.NAME, "submit")
             self.driver.execute_script("arguments[0].click();", submit_button)
             
-            # Verify we're redirected to my reviews page
             self.wait.until(EC.url_contains("my-reviews"))
             
-            # Check if our updated review is displayed
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "review-item")))
             reviews = self.driver.find_elements(By.CLASS_NAME, "review-item")
             
@@ -236,23 +204,18 @@ class TestReviewFunctionality:
         self.login_user()
         
         try:
-            # Navigate directly to the review page for the first song
             with app.app_context():
                 song_id = Song.query.filter_by(title='Song for Review').first().id
                 
             self.driver.get(f"{self.base_url}/review/{song_id}")
             
-            # Wait for the rating select element to be visible
             self.wait.until(EC.visibility_of_element_located((By.ID, "rating")))
             
-            # Verify rating options are only 1-5
             rating_select = Select(self.driver.find_element(By.ID, "rating"))
             options = rating_select.options
             
-            # Check the number of options
             assert len(options) == 5, "There should be exactly 5 rating options"
             
-            # Check the values of options
             option_values = [option.get_attribute("value") for option in options]
             expected_values = ["5", "4", "3", "2", "1"]
             

@@ -17,21 +17,18 @@ from app.models import User, Song, Review
 from werkzeug.security import generate_password_hash
 import logging
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class TestDashboardAndNavigation:
     @pytest.fixture(autouse=True)
     def setup(self):
-        # Create a temporary file to isolate the database for each test
         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
         app.config['TESTING'] = True
-        app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for testing
+        app.config['WTF_CSRF_ENABLED'] = False
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE']
         app.config['SECRET_KEY'] = 'test_secret_key'
         
-        # Set up Chrome options
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
@@ -41,21 +38,16 @@ class TestDashboardAndNavigation:
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--disable-infobars")
         
-        # Setup WebDriver
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         self.wait = WebDriverWait(self.driver, 20)
         
-        # Create the database and the database tables
         with app.app_context():
-            # Drop all tables first to ensure a clean state
             db.drop_all()
             db.create_all()
             
-            # Add test data
             test_user = User(username='testuser', password=generate_password_hash('testpassword'))
             db.session.add(test_user)
             
-            # Add multiple songs by different artists
             test_songs = [
                 Song(title='Dashboard Test Song 1', artist='Artist A'),
                 Song(title='Dashboard Test Song 2', artist='Artist B'),
@@ -68,7 +60,6 @@ class TestDashboardAndNavigation:
                 
             db.session.commit()
             
-            # Add some reviews
             test_reviews = [
                 Review(rating=5, comment="Excellent song!", username='testuser', song_id=1),
                 Review(rating=4, comment="Pretty good", username='testuser', song_id=2),
@@ -80,7 +71,6 @@ class TestDashboardAndNavigation:
             
             db.session.commit()
         
-        # Find a free port for the Flask app
         def find_free_port():
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('', 0))
@@ -88,7 +78,6 @@ class TestDashboardAndNavigation:
                 
         self.port = find_free_port()
         
-        # Start Flask app in a separate thread
         def run_flask_app():
             app.run(port=self.port, use_reloader=False)
             
@@ -96,16 +85,13 @@ class TestDashboardAndNavigation:
         self.flask_thread.daemon = True
         self.flask_thread.start()
         
-        # Give the app time to start
         time.sleep(3)
         
-        # Set the base URL with the dynamic port
         self.base_url = f"http://localhost:{self.port}"
         logger.info(f"Flask app running at {self.base_url}")
         
         yield
         
-        # Teardown
         self.driver.quit()
         os.close(self.db_fd)
         os.unlink(app.config['DATABASE'])
@@ -116,18 +102,14 @@ class TestDashboardAndNavigation:
         self.driver.get(f"{self.base_url}/login")
         
         try:
-            # Wait for username field to be visible
             self.wait.until(EC.visibility_of_element_located((By.ID, "username")))
             
-            # Fill out login form
             self.driver.find_element(By.ID, "username").send_keys("testuser")
             self.driver.find_element(By.ID, "password").send_keys("testpassword")
             
-            # Use JavaScript to click the submit button
             submit_button = self.driver.find_element(By.NAME, "submit")
             self.driver.execute_script("arguments[0].click();", submit_button)
             
-            # Wait for redirection to dashboard
             self.wait.until(EC.url_contains("dashboard"))
             logger.info("Successfully logged in")
             
@@ -142,42 +124,32 @@ class TestDashboardAndNavigation:
         self.login_user()
         
         try:
-            # Take a screenshot of the dashboard
             self.driver.save_screenshot("dashboard.png")
             
-            # Wait for dashboard elements to load
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "stat-card")))
             
-            # Find all stat-value elements
             stat_value_elements = self.driver.find_elements(By.CLASS_NAME, "stat-value")
             
-            # Make sure we have at least 3 statistics displayed
             assert len(stat_value_elements) >= 3, f"Expected at least 3 statistic values, found {len(stat_value_elements)}"
             
-            # Check total reviews statistic
             total_reviews = stat_value_elements[0].text
             logger.info(f"Total reviews displayed: {total_reviews}")
             assert total_reviews == "4", f"Expected 4 total reviews, got {total_reviews}"
             
-            # Check reviewed songs statistic
             reviewed_songs = stat_value_elements[1].text
             logger.info(f"Reviewed songs displayed: {reviewed_songs}")
             assert reviewed_songs == "4", f"Expected 4 reviewed songs, got {reviewed_songs}"
             
-            # Check reviewed artists statistic
             reviewed_artists = stat_value_elements[2].text
             logger.info(f"Reviewed artists displayed: {reviewed_artists}")
             assert reviewed_artists == "3", f"Expected 3 reviewed artists, got {reviewed_artists}"
             
-            # Check if recent activity section shows the reviews
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "activity-feed")))
             activity_feed = self.driver.find_element(By.CLASS_NAME, "activity-feed")
             review_items = activity_feed.find_elements(By.CLASS_NAME, "review-item")
             
-            # Check if we have reviews displayed
             assert len(review_items) > 0, "No review items found in the activity feed"
             
-            # Check that at least one of our test reviews is displayed
             test_review_found = False
             for item in review_items:
                 if "Excellent song!" in item.text:
@@ -198,21 +170,17 @@ class TestDashboardAndNavigation:
         self.login_user()
         
         try:
-            # Test navigation to My Reviews
             self.driver.find_element(By.LINK_TEXT, "My Reviews").click()
             self.wait.until(EC.url_contains("my-reviews"))
             assert "My Reviews" in self.driver.title
             
-            # Test navigation to Search Music
             self.driver.find_element(By.LINK_TEXT, "Search Music").click()
             self.wait.until(EC.url_contains("search"))
             assert "Search Music" in self.driver.title
             
-            # Test navigation to Shared Reviews
             self.driver.find_element(By.LINK_TEXT, "Shared Reviews").click()
             self.wait.until(EC.url_contains("shared-reviews"))
             
-            # Test navigation back to Dashboard
             self.driver.find_element(By.LINK_TEXT, "Dashboard").click()
             self.wait.until(EC.url_contains("dashboard"))
             assert "Dashboard" in self.driver.title
@@ -230,33 +198,26 @@ class TestDashboardAndNavigation:
         self.login_user()
         
         try:
-            # Step 1: Search for a non-existent song
             self.driver.find_element(By.LINK_TEXT, "Search Music").click()
             self.wait.until(EC.visibility_of_element_located((By.ID, "query")))
             
             search_term = "Unique Workflow Test Song"
             self.driver.find_element(By.ID, "query").send_keys(search_term)
             
-            # Click search button
             search_button = self.driver.find_element(By.CLASS_NAME, "btn-primary")
             self.driver.execute_script("arguments[0].click();", search_button)
             
-            # Wait for add form and fill it out
             self.wait.until(EC.visibility_of_element_located((By.ID, "artist")))
             self.driver.find_element(By.ID, "artist").send_keys("Workflow Test Artist")
             self.driver.find_element(By.ID, "title").send_keys(search_term)
             
-            # Step 2: Add the new song
             add_button = self.driver.find_element(By.CLASS_NAME, "btn-success")
             self.driver.execute_script("arguments[0].click();", add_button)
             
-            # Verify we're redirected to the review page
             self.wait.until(EC.visibility_of_element_located((By.XPATH, f"//h3[contains(text(), '{search_term}')]")))
             
-            # Step 3: Write a review
             self.wait.until(EC.visibility_of_element_located((By.ID, "rating")))
             
-            # Select rating from dropdown - using direct JavaScript to set value
             self.driver.execute_script("""
                 document.getElementById('rating').value = "5";
             """)
@@ -265,14 +226,11 @@ class TestDashboardAndNavigation:
             test_comment = "This is a test of the complete workflow - great song!"
             comment_field.send_keys(test_comment)
             
-            # Submit the review
             submit_button = self.driver.find_element(By.NAME, "submit")
             self.driver.execute_script("arguments[0].click();", submit_button)
             
-            # Verify we're redirected to my reviews page
             self.wait.until(EC.url_contains("my-reviews"))
             
-            # Step 4: Verify the new review is in My Reviews
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "review-item")))
             reviews = self.driver.find_elements(By.CLASS_NAME, "review-item")
             
@@ -284,11 +242,9 @@ class TestDashboardAndNavigation:
                     
             assert workflow_review_found, "Newly created review from workflow was not found"
             
-            # Step 5: Return to dashboard to see updated statistics
             self.driver.find_element(By.LINK_TEXT, "Dashboard").click()
             self.wait.until(EC.url_contains("dashboard"))
             
-            # Check that total reviews increased by 1
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "stat-value")))
             stat_value_elements = self.driver.find_elements(By.CLASS_NAME, "stat-value")
             total_reviews = stat_value_elements[0].text
