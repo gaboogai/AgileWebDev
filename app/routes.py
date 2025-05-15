@@ -1,3 +1,4 @@
+
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import UserMixin
 from app import app, db
@@ -6,6 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf import FlaskForm
 from app.forms import ReviewSendForm, LoginForm, RegistrationForm, SearchForm, AddSongForm, ReviewForm
+import datetime
 
 @app.route('/')
 @app.route('/index')
@@ -205,6 +207,12 @@ def shared_reviews():
                            title="Reviews Shared With Me", 
                            shared_reviews=shared_reviews)
 
+
+@app.route('/current-time')
+def current_time():
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return jsonify({'time': now})
+  
 
 @app.route('/share', methods=['GET', 'POST'])
 @login_required
