@@ -11,31 +11,26 @@
   </div>
   
   <div class="review-form">
-    <form action="/review/{{ song.id }}" method="POST">
+    <form action="{{ url_for('review', song_id=song.id) }}" method="POST">
+      {{ form.hidden_tag() }}
+      
       <div class="mb-3">
-        <label for="rating" class="form-label">Your Rating (1-5 stars)</label>
-        <select class="form-select" id="rating" name="rating" required>
-          <option value="" disabled {% if not existing_review %}selected{% endif %}>Select your rating</option>
-          <option value="5" {% if existing_review and existing_review.rating == 5 %}selected{% endif %}>★★★★★ (5 stars)</option>
-          <option value="4" {% if existing_review and existing_review.rating == 4 %}selected{% endif %}>★★★★☆ (4 stars)</option>
-          <option value="3" {% if existing_review and existing_review.rating == 3 %}selected{% endif %}>★★★☆☆ (3 stars)</option>
-          <option value="2" {% if existing_review and existing_review.rating == 2 %}selected{% endif %}>★★☆☆☆ (2 stars)</option>
-          <option value="1" {% if existing_review and existing_review.rating == 1 %}selected{% endif %}>★☆☆☆☆ (1 star)</option>
-        </select>
+        {{ form.rating.label(class="form-label") }}
+        {{ form.rating(class="form-select") }}
       </div>
       
       <div class="mb-3">
-        <label for="comment" class="form-label">Your Comments (optional)</label>
-        <textarea class="form-control" id="comment" name="comment" rows="4">{% if existing_review %}{{ existing_review.comment }}{% endif %}</textarea>
+        {{ form.comment.label(class="form-label") }}
+        {{ form.comment(class="form-control", rows=4) }}
       </div>
       
-      <button type="submit" class="btn btn-primary">
-        {% if existing_review %}
-          <i class="fas fa-edit"></i> Update Review
+      <div class="mb-3">
+        {% if form.submit.label.text == 'Update Review' %}
+          {{ form.submit(class="btn btn-primary") }}
         {% else %}
-          <i class="fas fa-star"></i> Submit Review
+          {{ form.submit(class="btn btn-primary") }}
         {% endif %}
-      </button>
+      </div>
     </form>
   </div>
 </div>

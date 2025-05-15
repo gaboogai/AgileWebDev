@@ -1,20 +1,27 @@
+
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import UserMixin
 from app import app, db
 from app.models import User, Song, Review, ReviewShares
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
+from flask_wtf import FlaskForm
+from app.forms import ReviewSendForm, LoginForm, RegistrationForm, SearchForm, AddSongForm, ReviewForm
+import datetime
 
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template("login.html", title="Welcome to TUN'D")
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    form = LoginForm()
+    register_form = RegistrationForm()
+    
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
         
         user = User.query.filter_by(username=username).first()
         
@@ -23,34 +30,30 @@ def login():
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password')
-            return redirect(url_for('index'))
+            return redirect(url_for('login'))
     
-    return redirect(url_for('index'))
+    return render_template("login.html", title="Welcome to TUN'D", form=form, register_form=register_form)
 
-@app.route('/register', methods=['POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        username = request.form['new_username']
-        password = request.form['new_password']
-        confirm_password = request.form['confirm_password']
-        
-        # Check if passwords match
-        if password != confirm_password:
-            flash('Passwords do not match')
-            return redirect(url_for('index'))
-        
-        # Check if username already exists
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            flash('Username already exists')
-            return redirect(url_for('index'))
+    form = RegistrationForm()
+    
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
         
         # Create new user
         new_user = User(username=username, password=generate_password_hash(password))
         db.session.add(new_user)
         db.session.commit()
-        
+
+        login_user(new_user)
+        flash('Account created successfully!')
         return redirect(url_for('dashboard'))
+    
+    # If validation fails, redirect to login page with registration form
+    login_form = LoginForm()
+    return render_template('login.html', title="Welcome to TUN'D", form=login_form, register_form=form)
 
 
 @app.route('/dashboard')
@@ -95,55 +98,81 @@ def my_reviews():
     
     return render_template('my_reviews.html', title="My Reviews", reviews=user_reviews)
 
-@app.route('/search')
+@app.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
-    query = request.args.get('q', '')
-    results = []
+    search_form = SearchForm()
+    add_song_form = AddSongForm()
     
+    if search_form.validate_on_submit():
+        return redirect(url_for('search', q=search_form.query.data))
+    
+    query = request.args.get('q', '')
     if query:
+        # Set the form field value to the query parameter
+        search_form.query.data = query
+        
         # Search for songs by title or artist
         results = Song.query.filter(
             (Song.title.ilike(f'%{query}%')) | (Song.artist.ilike(f'%{query}%'))
         ).all()
+    else:
+        results = []
     
-    return render_template('search.html', title="Search Music", results=results, query=query)
+    return render_template('search.html', 
+                          title="Search Music", 
+                          search_form=search_form, 
+                          add_song_form=add_song_form,
+                          results=results, 
+                          query=query)
 
 @app.route('/add-song', methods=['POST'])
 @login_required
 def add_song():
+    add_song_form = AddSongForm()
     
-    artist = request.form['artist']
-    title = request.form['title']
+    if add_song_form.validate_on_submit():
+        artist = add_song_form.artist.data
+        title = add_song_form.title.data
+        
+        # Check if song exists
+        existing_song = Song.query.filter_by(title=title, artist=artist).first()
+        
+        if existing_song:
+            flash('This song already exists')
+            return redirect(url_for('search', q=artist))
+        
+        # Create new song
+        new_song = Song(title=title, artist=artist)
+        db.session.add(new_song)
+        db.session.commit()
+        
+        flash('Song added successfully! Now you can review it.')
+        return redirect(url_for('review', song_id=new_song.id))
     
-    # Check if song exists
-    existing_song = Song.query.filter_by(title=title, artist=artist).first()
-    
-    if existing_song:
-        flash('This song already exists')
-        return redirect(url_for('search', q=artist))
-    
-    # Create new song
-    new_song = Song(title=title, artist=artist)
-    db.session.add(new_song)
-    db.session.commit()
-    
-    flash('Song added successfully! Now you can review it.')
-    return redirect(url_for('review', song_id=new_song.id))
+    # If validation fails, redirect back to search with the form errors
+    flash('Please fill in all the required fields')
+    return redirect(url_for('search'))
 
 @app.route('/review/<int:song_id>', methods=['GET', 'POST'])
 @login_required
 def review(song_id):
-    
     song = Song.query.get_or_404(song_id)
+    form = ReviewForm()
     
-    if request.method == 'POST':
-        rating = int(request.form['rating'])
-        comment = request.form['comment']
+    # Check if user already has a review for this song
+    existing_review = Review.query.filter_by(username=current_user.get_id(), song_id=song_id).first()
+    
+    # Pre-populate form if review exists
+    if existing_review and request.method == 'GET':
+        form.rating.data = str(existing_review.rating)
+        form.comment.data = existing_review.comment
+        form.submit.label.text = 'Update Review'
+    
+    if form.validate_on_submit():
+        rating = int(form.rating.data)
+        comment = form.comment.data
         username = current_user.get_id()
-        
-        # Check if user already reviewed this song
-        existing_review = Review.query.filter_by(username=username, song_id=song_id).first()
         
         if existing_review:
             # Update existing review
@@ -160,78 +189,7 @@ def review(song_id):
         
         return redirect(url_for('my_reviews'))
     
-    return render_template('review.html', title=f"Review - {song.title}", song=song, existing_review=existing_review)
-
-@app.route('/share')
-@login_required
-def share_review():
-    
-    username = current_user.get_id()
-    user = User.query.filter_by(username=username).first()
-    
-    # Get recent reviews
-    reviews = Review.query.filter_by(username=username).order_by(Review.id.desc()).all()
-    
-    
-    return render_template("share.html", title="Share", 
-                           user=user,
-                           reviews=reviews,)
-
-
-@app.route('/prepare-share', methods=['POST'])
-@login_required
-def prepare_share():
-    
-    # Get selected review IDs from form
-    selected_review_ids = request.form.getlist('selected_reviews')
-    
-    if not selected_review_ids:
-        flash('Please select at least one review to share.')
-        return redirect(url_for('share_review'))
-    
-    # Get full review objects for the selected IDs
-    reviews = []
-    for review_id in selected_review_ids:
-        review = Review.query.get(int(review_id))
-        if review and review.username == current_user.get_id():
-            reviews.append(review)
-    
-    if not reviews:
-        flash('No valid reviews were selected.')
-        return redirect(url_for('share_review'))
-    
-    return render_template('send.html', 
-                           title="Send Reviews", 
-                           selected_reviews=selected_review_ids,
-                           reviews=reviews)
-
-@app.route('/share-reviews', methods=['POST'])
-@login_required
-def share_reviews():
-    review_ids = request.form.getlist('review_ids')
-    recipient_username = request.form.get('recipient_username')
-    
-    if not review_ids or not recipient_username:
-        flash('Missing information. Please try again.')
-        return redirect(url_for('share_review'))
-    
-    recipient = User.query.filter_by(username=recipient_username).first()
-    if not recipient:
-        flash(f'User "{recipient_username}" does not exist.')
-        return redirect(url_for('prepare_share'))
-    
-    for review_id in review_ids:
-        review = Review.query.get(int(review_id))
-        if review and review.username == current_user.get_id():
-            existing_share = ReviewShares.query.filter_by(review_id=review.id, username=recipient_username).first()
-            
-            if not existing_share:
-                new_share = ReviewShares(review_id=review.id, username=recipient_username)
-                db.session.add(new_share)
-    
-    db.session.commit()
-    return redirect(url_for('share_review'))
-
+    return render_template('review.html', title=f"Review - {song.title}", song=song, form=form)
 
 @app.route('/shared-reviews')
 @login_required
@@ -249,3 +207,34 @@ def shared_reviews():
                            title="Reviews Shared With Me", 
                            shared_reviews=shared_reviews)
 
+
+@app.route('/current-time')
+def current_time():
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return jsonify({'time': now})
+  
+
+@app.route('/share', methods=['GET', 'POST'])
+@login_required
+def share():
+    username = current_user.get_id()
+    user = User.query.filter_by(username=username).first()
+    
+    reviews = Review.query.filter_by(username=username).order_by(Review.id.desc()).all()
+
+    form = ReviewSendForm()
+    form.review.choices = [(review.id, f"{review.song.title} - {review.rating}") for review in reviews]
+
+    if form.validate_on_submit():
+        print(form.review.data)
+        print(form.recipient_username.data)
+        new_share = ReviewShares(review_id=form.review.data, username=form.recipient_username.data)
+        db.session.add(new_share)
+        db.session.commit()
+        flash('Review shared successfully!')
+        return redirect(url_for('share'))
+    
+    return render_template("share.html", title="Share", 
+                           user=user,
+                           reviews=reviews,
+                           form=form)

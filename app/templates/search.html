@@ -3,13 +3,17 @@
 <div class="content-area">
   <h2>Search Music</h2>
   
-  <form action="/search" method="GET" class="mb-4">
+  <form action="{{ url_for('search') }}" method="POST" class="mb-4">
+    {{ search_form.hidden_tag() }}
     <div class="input-group">
-      <input type="text" class="form-control" name="q" placeholder="Search by artist or song title" value="{{ query }}">
+      {{ search_form.query(class="form-control", placeholder="Search by artist or song title") }}
       <button class="btn btn-primary" type="submit">
-        <i class="fas fa-search"></i> Search
+        <i class="fas fa-search"></i> {{ search_form.submit.label.text }}
       </button>
     </div>
+    {% for error in search_form.query.errors %}
+      <span class="text-danger">{{ error }}</span>
+    {% endfor %}
   </form>
   
   {% if query %}
@@ -23,7 +27,7 @@
               <div class="card-body">
                 <h5 class="card-title">{{ song.title }}</h5>
                 <p class="card-text">by {{ song.artist }}</p>
-                <a href="/review/{{ song.id }}" class="btn btn-outline-primary">
+                <a href="{{ url_for('review', song_id=song.id) }}" class="btn btn-outline-primary">
                   <i class="fas fa-star"></i> Rate this song
                 </a>
               </div>
@@ -41,16 +45,23 @@
           <h4>Add New Song</h4>
         </div>
         <div class="card-body">
-          <form action="/add-song" method="POST">
+          <form action="{{ url_for('add_song') }}" method="POST">
+            {{ add_song_form.hidden_tag() }}
             <div class="mb-3">
-              <label for="artist" class="form-label">Artist</label>
-              <input type="text" class="form-control" id="artist" name="artist" required>
+              {{ add_song_form.artist.label(class="form-label") }}
+              {{ add_song_form.artist(class="form-control") }}
+              {% for error in add_song_form.artist.errors %}
+                <span class="text-danger">{{ error }}</span>
+              {% endfor %}
             </div>
             <div class="mb-3">
-              <label for="title" class="form-label">Song Title</label>
-              <input type="text" class="form-control" id="title" name="title" required>
+              {{ add_song_form.title.label(class="form-label") }}
+              {{ add_song_form.title(class="form-control") }}
+              {% for error in add_song_form.title.errors %}
+                <span class="text-danger">{{ error }}</span>
+              {% endfor %}
             </div>
-            <button type="submit" class="btn btn-success">Add Song</button>
+            {{ add_song_form.submit(class="btn btn-success") }}
           </form>
         </div>
       </div>
@@ -60,22 +71,22 @@
       <h3>Popular Artists</h3>
       <div class="row">
         <div class="col-md-4 mb-3">
-          <a href="/search?q=Taylor%20Swift" class="btn btn-outline-secondary w-100">Taylor Swift</a>
+          <a href="{{ url_for('search', q='Taylor Swift') }}" class="btn btn-outline-secondary w-100">Taylor Swift</a>
         </div>
         <div class="col-md-4 mb-3">
-          <a href="/search?q=Ed%20Sheeran" class="btn btn-outline-secondary w-100">Ed Sheeran</a>
+          <a href="{{ url_for('search', q='Ed Sheeran') }}" class="btn btn-outline-secondary w-100">Ed Sheeran</a>
         </div>
         <div class="col-md-4 mb-3">
-          <a href="/search?q=Drake" class="btn btn-outline-secondary w-100">Drake</a>
+          <a href="{{ url_for('search', q='Drake') }}" class="btn btn-outline-secondary w-100">Drake</a>
         </div>
         <div class="col-md-4 mb-3">
-          <a href="/search?q=Beyonce" class="btn btn-outline-secondary w-100">Beyoncé</a>
+          <a href="{{ url_for('search', q='Beyonce') }}" class="btn btn-outline-secondary w-100">Beyoncé</a>
         </div>
         <div class="col-md-4 mb-3">
-          <a href="/search?q=The%20Weeknd" class="btn btn-outline-secondary w-100">The Weeknd</a>
+          <a href="{{ url_for('search', q='The Weeknd') }}" class="btn btn-outline-secondary w-100">The Weeknd</a>
         </div>
         <div class="col-md-4 mb-3">
-          <a href="/search?q=Billie%20Eilish" class="btn btn-outline-secondary w-100">Billie Eilish</a>
+          <a href="{{ url_for('search', q='Billie Eilish') }}" class="btn btn-outline-secondary w-100">Billie Eilish</a>
         </div>
       </div>
     </div>
