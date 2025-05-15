@@ -12,8 +12,15 @@ export SECRET_KEY=testing_secret_key
 pip install -r requirements.txt
 pip install pytest selenium webdriver-manager
 
-# Run the tests
-python -m pytest -v selenium_test.py advselenium_test.py
+# Create test directory if it doesn't exist
+mkdir -p tests
+
+# Run individual tests with increased verbosity and detailed error messages
+echo "Running test_app.py..."
+python -m pytest -v test_app.py -s
+
+echo "Running test_advanced.py..."
+python -m pytest -v test_advanced.py -s
 
 # Output the results
 echo "Tests completed!"

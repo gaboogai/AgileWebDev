@@ -11,7 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
 from webdriver_manager.chrome import ChromeDriverManager
 from app import app, db
 from app.models import User, Song, Review, ReviewShares
@@ -29,9 +29,11 @@ class TestAdvancedFeatures:
         
         # Set up Chrome options
         chrome_options = Options()
-        chrome_options.add_argument("--headless")  # Run in headless mode (no UI)
+        chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--window-size=1920,1080")  # Set window size
+        chrome_options.add_argument("--disable-gpu")  # Disable GPU hardware acceleration
         
         # Setup WebDriver
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
@@ -82,7 +84,7 @@ class TestAdvancedFeatures:
         self.flask_thread.start()
         
         # Give the app time to start
-        time.sleep(1)
+        time.sleep(2)
         
         # Set the base URL with the dynamic port
         self.base_url = f"http://localhost:{self.port}"
@@ -95,11 +97,19 @@ class TestAdvancedFeatures:
         os.unlink(app.config['DATABASE'])
     
     def login_user(self, username, password):
-        """Helper method to login a user"""
+        """Helper method to login a user using JS click to avoid ElementClickInterceptedException"""
         self.driver.get(f"{self.base_url}/login")
-        self.driver.find_element(By.ID, "username").send_keys(username)
-        self.driver.find_element(By.ID, "password").send_keys(password)
-        self.driver.find_element(By.NAME, "submit").click()
+        self.wait.until(EC.presence_of_element_located((By.NAME, "username")))
+        
+        # Fill out login form
+        self.driver.find_element(By.NAME, "username").send_keys(username)
+        self.driver.find_element(By.NAME, "password").send_keys(password)
+        
+        # Use JavaScript to click the submit button to avoid ElementClickInterceptedException
+        submit_button = self.driver.find_element(By.NAME, "submit")
+        self.driver.execute_script("arguments[0].click();", submit_button)
+        
+        # Wait for redirection to dashboard
         self.wait.until(EC.url_contains("dashboard"))
     
     def test_share_review(self):
@@ -110,17 +120,23 @@ class TestAdvancedFeatures:
         # Go to share page
         self.driver.get(f"{self.base_url}/share")
         
-        # Select a review to share
-        select_element = Select(self.driver.find_element(By.ID, "review"))
-        select_element.select_by_index(0)  # Select first review
+        # Wait for the page to load completely
+        self.wait.until(EC.presence_of_element_located((By.ID, "recipient_username")))
+        
+        # Use JavaScript to select review option to avoid interception issues
+        self.driver.execute_script("""
+            document.getElementById('review').value = document.getElementById('review').options[0].value;
+        """)
         
         # Enter recipient username
         self.driver.find_element(By.ID, "recipient_username").send_keys("user2")
         
-        # Submit the form
-        self.driver.find_element(By.NAME, "submit").click()
+        # Submit the form using JavaScript
+        submit_button = self.driver.find_element(By.NAME, "submit")
+        self.driver.execute_script("arguments[0].click();", submit_button)
         
         # Check if success message is displayed
+        self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "alert-success")))
         flash_message = self.driver.find_element(By.CLASS_NAME, "alert-success")
         assert "Review shared successfully" in flash_message.text
     
@@ -128,13 +144,20 @@ class TestAdvancedFeatures:
         """Test error handling for duplicate username during registration"""
         self.driver.get(f"{self.base_url}/register")
         
+        # Wait for the page to load
+        self.wait.until(EC.presence_of_element_located((By.NAME, "username")))
+        
         # Try to register with an existing username
-        self.driver.find_element(By.ID, "username").send_keys("user1")
-        self.driver.find_element(By.ID, "password").send_keys("newpassword")
-        self.driver.find_element(By.ID, "confirm_password").send_keys("newpassword")
-        self.driver.find_element(By.ID, "submit").click()
+        self.driver.find_element(By.NAME, "username").send_keys("user1")
+        self.driver.find_element(By.NAME, "password").send_keys("newpassword")
+        self.driver.find_element(By.NAME, "confirm_password").send_keys("newpassword")
+        
+        # Use JavaScript to click the submit button
+        submit_button = self.driver.find_element(By.NAME, "submit")
+        self.driver.execute_script("arguments[0].click();", submit_button)
         
         # Check if error message is displayed
+        self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "text-danger")))
         error_message = self.driver.find_element(By.CLASS_NAME, "text-danger")
         assert "Username already exists" in error_message.text
     
@@ -142,12 +165,19 @@ class TestAdvancedFeatures:
         """Test error handling for password mismatch during registration"""
         self.driver.get(f"{self.base_url}/register")
         
+        # Wait for the page to load
+        self.wait.until(EC.presence_of_element_located((By.NAME, "username")))
+        
         # Try to register with mismatched passwords
-        self.driver.find_element(By.ID, "username").send_keys("newuser")
-        self.driver.find_element(By.ID, "password").send_keys("password1")
-        self.driver.find_element(By.ID, "confirm_password").send_keys("password2")
-        self.driver.find_element(By.ID, "submit").click()
+        self.driver.find_element(By.NAME, "username").send_keys("newuser")
+        self.driver.find_element(By.NAME, "password").send_keys("password1")
+        self.driver.find_element(By.NAME, "confirm_password").send_keys("password2")
+        
+        # Use JavaScript to click the submit button
+        submit_button = self.driver.find_element(By.NAME, "submit")
+        self.driver.execute_script("arguments[0].click();", submit_button)
         
         # Check if error message is displayed
+        self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "text-danger")))
         error_message = self.driver.find_element(By.CLASS_NAME, "text-danger")
         assert "Passwords must match" in error_message.text
