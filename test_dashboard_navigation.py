@@ -10,6 +10,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from app import app, db
@@ -85,7 +86,7 @@ class TestDashboardAndNavigation:
         self.flask_thread.daemon = True
         self.flask_thread.start()
         
-        time.sleep(3)
+        time.sleep(5)
         
         self.base_url = f"http://localhost:{self.port}"
         logger.info(f"Flask app running at {self.base_url}")
@@ -128,20 +129,25 @@ class TestDashboardAndNavigation:
             
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "stat-card")))
             
+            logger.info("Dashboard page content accessible")
+            
+            self.wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "stat-value")))
+            
             stat_value_elements = self.driver.find_elements(By.CLASS_NAME, "stat-value")
+            logger.info(f"Found {len(stat_value_elements)} stat value elements")
             
             assert len(stat_value_elements) >= 3, f"Expected at least 3 statistic values, found {len(stat_value_elements)}"
             
             total_reviews = stat_value_elements[0].text
-            logger.info(f"Total reviews displayed: {total_reviews}")
+            reviewed_songs = stat_value_elements[1].text
+            reviewed_artists = stat_value_elements[2].text
+            
+            logger.info(f"Stats found - total reviews: {total_reviews}, reviewed songs: {reviewed_songs}, reviewed artists: {reviewed_artists}")
+            
             assert total_reviews == "4", f"Expected 4 total reviews, got {total_reviews}"
             
-            reviewed_songs = stat_value_elements[1].text
-            logger.info(f"Reviewed songs displayed: {reviewed_songs}")
             assert reviewed_songs == "4", f"Expected 4 reviewed songs, got {reviewed_songs}"
             
-            reviewed_artists = stat_value_elements[2].text
-            logger.info(f"Reviewed artists displayed: {reviewed_artists}")
             assert reviewed_artists == "3", f"Expected 3 reviewed artists, got {reviewed_artists}"
             
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "activity-feed")))
@@ -218,9 +224,8 @@ class TestDashboardAndNavigation:
             
             self.wait.until(EC.visibility_of_element_located((By.ID, "rating")))
             
-            self.driver.execute_script("""
-                document.getElementById('rating').value = "5";
-            """)
+            rating_select = Select(self.driver.find_element(By.ID, "rating"))
+            rating_select.select_by_visible_text("★★★★★ (5 stars)")
             
             comment_field = self.driver.find_element(By.ID, "comment")
             test_comment = "This is a test of the complete workflow - great song!"
