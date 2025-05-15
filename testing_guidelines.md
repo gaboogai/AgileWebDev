@@ -176,25 +176,6 @@ python -m pytest -v fixed_test_advanced_scenarios.py
 - Suppress with `export PYTHONWARNINGS="ignore::DeprecationWarning:sqlalchemy"`
 - For permanent fix, update code to use `Session.get()` instead
 
-## Directory Structure
-```
-/
-|-- app/                         # Application code
-|-- tests/                       # Test files
-|   |-- test_app.py              # Basic authentication tests
-|   |-- test_advanced.py         # Advanced authentication tests
-|   |-- test_song_management.py  # Song management tests
-|   |-- test_review_functionality.py # Review functionality tests
-|   |-- fixed_test_dashboard_navigation.py # Dashboard/navigation tests
-|   |-- fixed_test_advanced_scenarios.py # Advanced user scenarios
-|   |-- conftest.py              # Shared test fixtures
-|-- test_screenshots/            # Directory for test screenshots
-|-- fixed_run_all_tests.sh       # Script to run all tests
-|-- requirements.txt             # Project dependencies
-|-- server.py                    # Main application entry point
-|-- TESTING.md                   # This testing documentation
-```
-
 ## Extending the Test Suite
 
 ### Adding New Tests
