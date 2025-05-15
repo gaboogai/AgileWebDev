@@ -1,0 +1,312 @@
+import os
+import pytest
+import tempfile
+import time
+from threading import Thread
+import socket
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
+from webdriver_manager.chrome import ChromeDriverManager
+from app import app, db
+from app.models import User, Song, Review
+from werkzeug.security import generate_password_hash
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class TestDashboardAndNavigation:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        # Create a temporary file to isolate the database for each test
+        self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
+        app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for testing
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE']
+        app.config['SECRET_KEY'] = 'test_secret_key'
+        
+        # Set up Chrome options
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-infobars")
+        
+        # Setup WebDriver
+        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+        self.wait = WebDriverWait(self.driver, 20)
+        
+        # Create the database and the database tables
+        with app.app_context():
+            # Drop all tables first to ensure a clean state
+            db.drop_all()
+            db.create_all()
+            
+            # Add test data
+            test_user = User(username='testuser', password=generate_password_hash('testpassword'))
+            db.session.add(test_user)
+            
+            # Add multiple songs by different artists
+            test_songs = [
+                Song(title='Dashboard Test Song 1', artist='Artist A'),
+                Song(title='Dashboard Test Song 2', artist='Artist B'),
+                Song(title='Dashboard Test Song 3', artist='Artist C'),
+                Song(title='Dashboard Test Song 4', artist='Artist A'),
+                Song(title='Dashboard Test Song 5', artist='Artist D')
+            ]
+            for song in test_songs:
+                db.session.add(song)
+                
+            db.session.commit()
+            
+            # Add some reviews
+            test_reviews = [
+                Review(rating=5, comment="Excellent song!", username='testuser', song_id=1),
+                Review(rating=4, comment="Pretty good", username='testuser', song_id=2),
+                Review(rating=3, comment="It's okay", username='testuser', song_id=3),
+                Review(rating=5, comment="Another great one", username='testuser', song_id=4)
+            ]
+            for review in test_reviews:
+                db.session.add(review)
+            
+            db.session.commit()
+        
+        # Find a free port for the Flask app
+        def find_free_port():
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('', 0))
+                return s.getsockname()[1]
+                
+        self.port = find_free_port()
+        
+        # Start Flask app in a separate thread
+        def run_flask_app():
+            app.run(port=self.port, use_reloader=False)
+            
+        self.flask_thread = Thread(target=run_flask_app)
+        self.flask_thread.daemon = True
+        self.flask_thread.start()
+        
+        # Give the app time to start
+        time.sleep(3)
+        
+        # Set the base URL with the dynamic port
+        self.base_url = f"http://localhost:{self.port}"
+        logger.info(f"Flask app running at {self.base_url}")
+        
+        yield
+        
+        # Teardown
+        self.driver.quit()
+        os.close(self.db_fd)
+        os.unlink(app.config['DATABASE'])
+    
+    def login_user(self):
+        """Helper method to login as testuser"""
+        logger.info("Logging in as testuser")
+        self.driver.get(f"{self.base_url}/login")
+        
+        try:
+            # Wait for username field to be visible
+            self.wait.until(EC.visibility_of_element_located((By.ID, "username")))
+            
+            # Fill out login form
+            self.driver.find_element(By.ID, "username").send_keys("testuser")
+            self.driver.find_element(By.ID, "password").send_keys("testpassword")
+            
+            # Use JavaScript to click the submit button
+            submit_button = self.driver.find_element(By.NAME, "submit")
+            self.driver.execute_script("arguments[0].click();", submit_button)
+            
+            # Wait for redirection to dashboard
+            self.wait.until(EC.url_contains("dashboard"))
+            logger.info("Successfully logged in")
+            
+        except Exception as e:
+            self.driver.save_screenshot("login_error.png")
+            logger.error(f"Error during login: {str(e)}")
+            raise
+    
+    def test_dashboard_statistics(self):
+        """Test that dashboard displays correct statistics"""
+        logger.info("Running test_dashboard_statistics")
+        self.login_user()
+        
+        try:
+            # Take a screenshot of the dashboard
+            self.driver.save_screenshot("dashboard.png")
+            
+            # Check total reviews statistic
+            total_reviews_element = self.driver.find_element(By.XPATH, "//div[contains(@class, 'stat-value')][1]")
+            assert total_reviews_element.text == "4", f"Expected 4 total reviews, got {total_reviews_element.text}"
+            
+            # Check reviewed songs statistic
+            reviewed_songs_element = self.driver.find_element(By.XPATH, "//div[contains(@class, 'stat-value')][2]")
+            assert reviewed_songs_element.text == "4", f"Expected 4 reviewed songs, got {reviewed_songs_element.text}"
+            
+            # Check reviewed artists statistic
+            reviewed_artists_element = self.driver.find_element(By.XPATH, "//div[contains(@class, 'stat-value')][3]")
+            assert reviewed_artists_element.text == "3", f"Expected 3 reviewed artists, got {reviewed_artists_element.text}"
+            
+            # Check if recent activity section shows the reviews
+            activity_feed = self.driver.find_element(By.CLASS_NAME, "activity-feed")
+            review_items = activity_feed.find_elements(By.CLASS_NAME, "review-item")
+            
+            # Check if we have the recent reviews displayed
+            assert len(review_items) > 0, "No review items found in the activity feed"
+            
+            # Check that at least one of our test reviews is displayed
+            test_review_found = False
+            for item in review_items:
+                if "Excellent song!" in item.text:
+                    test_review_found = True
+                    break
+                    
+            assert test_review_found, "Test review was not found in the activity feed"
+            logger.info("test_dashboard_statistics passed")
+            
+        except Exception as e:
+            self.driver.save_screenshot("dashboard_stats_error.png")
+            logger.error(f"Error in test_dashboard_statistics: {str(e)}")
+            raise
+    
+    def test_navigation_links(self):
+        """Test that navigation links in the sidebar work correctly"""
+        logger.info("Running test_navigation_links")
+        self.login_user()
+        
+        try:
+            # Test navigation to My Reviews
+            self.driver.find_element(By.LINK_TEXT, "My Reviews").click()
+            self.wait.until(EC.url_contains("my-reviews"))
+            assert "My Reviews" in self.driver.title
+            
+            # Test navigation to Search Music
+            self.driver.find_element(By.LINK_TEXT, "Search Music").click()
+            self.wait.until(EC.url_contains("search"))
+            assert "Search Music" in self.driver.title
+            
+            # Test navigation to Shared Reviews
+            self.driver.find_element(By.LINK_TEXT, "Shared Reviews").click()
+            self.wait.until(EC.url_contains("shared-reviews"))
+            assert "Reviews Shared With Me" in self.driver.title
+            
+            # Test navigation back to Dashboard
+            self.driver.find_element(By.LINK_TEXT, "Dashboard").click()
+            self.wait.until(EC.url_contains("dashboard"))
+            assert "Dashboard" in self.driver.title
+            
+            logger.info("test_navigation_links passed")
+            
+        except Exception as e:
+            self.driver.save_screenshot("navigation_error.png")
+            logger.error(f"Error in test_navigation_links: {str(e)}")
+            raise
+    
+    def test_dashboard_top_rated_songs(self):
+        """Test that dashboard displays top rated songs correctly"""
+        logger.info("Running test_dashboard_top_rated_songs")
+        self.login_user()
+        
+        try:
+            # Check if the top rated songs section is present
+            self.wait.until(EC.presence_of_element_located((By.XPATH, "//h4[contains(text(), 'Top Rated Songs')]")))
+            
+            # Find the list of top rated songs
+            top_songs_list = self.driver.find_element(By.XPATH, "//h4[contains(text(), 'Top Rated Songs')]/following-sibling::div//ul")
+            song_items = top_songs_list.find_elements(By.TAG_NAME, "li")
+            
+            # Check if we have songs in the list
+            assert len(song_items) > 0, "No songs found in the top rated list"
+            
+            # The first song should be one of our 5-star rated songs
+            first_song = song_items[0].text
+            assert "Dashboard Test Song 1" in first_song or "Dashboard Test Song 4" in first_song, \
+                   f"Expected a 5-star song to be first, but got {first_song}"
+            
+            logger.info("test_dashboard_top_rated_songs passed")
+            
+        except Exception as e:
+            self.driver.save_screenshot("top_rated_error.png")
+            logger.error(f"Error in test_dashboard_top_rated_songs: {str(e)}")
+            raise
+    
+    def test_combined_workflow(self):
+        """Test a combined workflow: search -> add -> review -> view in my reviews"""
+        logger.info("Running test_combined_workflow")
+        self.login_user()
+        
+        try:
+            # Step 1: Search for a non-existent song
+            self.driver.find_element(By.LINK_TEXT, "Search Music").click()
+            self.wait.until(EC.visibility_of_element_located((By.ID, "query")))
+            
+            search_term = "Unique Workflow Test Song"
+            self.driver.find_element(By.ID, "query").send_keys(search_term)
+            
+            # Click search button
+            search_button = self.driver.find_element(By.CLASS_NAME, "btn-primary")
+            self.driver.execute_script("arguments[0].click();", search_button)
+            
+            # Wait for add form and fill it out
+            self.wait.until(EC.visibility_of_element_located((By.ID, "artist")))
+            self.driver.find_element(By.ID, "artist").send_keys("Workflow Test Artist")
+            self.driver.find_element(By.ID, "title").send_keys(search_term)
+            
+            # Step 2: Add the new song
+            add_button = self.driver.find_element(By.CLASS_NAME, "btn-success")
+            self.driver.execute_script("arguments[0].click();", add_button)
+            
+            # Verify we're redirected to the review page
+            self.wait.until(EC.visibility_of_element_located((By.XPATH, f"//h3[contains(text(), '{search_term}')]")))
+            
+            # Step 3: Write a review
+            rating_select = Select(self.driver.find_element(By.ID, "rating"))
+            rating_select.select_by_visible_text("★★★★★ (5 stars)")
+            
+            comment_field = self.driver.find_element(By.ID, "comment")
+            test_comment = "This is a test of the complete workflow - great song!"
+            comment_field.send_keys(test_comment)
+            
+            # Submit the review
+            submit_button = self.driver.find_element(By.NAME, "submit")
+            self.driver.execute_script("arguments[0].click();", submit_button)
+            
+            # Verify we're redirected to my reviews page
+            self.wait.until(EC.url_contains("my-reviews"))
+            
+            # Step 4: Verify the new review is in My Reviews
+            self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "review-item")))
+            reviews = self.driver.find_elements(By.CLASS_NAME, "review-item")
+            
+            workflow_review_found = False
+            for review in reviews:
+                if search_term in review.text and test_comment in review.text:
+                    workflow_review_found = True
+                    break
+                    
+            assert workflow_review_found, "Newly created review from workflow was not found"
+            
+            # Step 5: Return to dashboard to see updated statistics
+            self.driver.find_element(By.LINK_TEXT, "Dashboard").click()
+            self.wait.until(EC.url_contains("dashboard"))
+            
+            # Check that total reviews increased by 1
+            total_reviews_element = self.driver.find_element(By.XPATH, "//div[contains(@class, 'stat-value')][1]")
+            assert total_reviews_element.text == "5", f"Expected 5 total reviews after workflow, got {total_reviews_element.text}"
+            
+            logger.info("test_combined_workflow passed")
+            
+        except Exception as e:
+            self.driver.save_screenshot("workflow_error.png")
+            logger.error(f"Error in test_combined_workflow: {str(e)}")
+            raise
