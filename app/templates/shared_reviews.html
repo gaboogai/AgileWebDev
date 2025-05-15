@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
-  <div class="card-header">
-    <h2><i class="fas fa-share-alt"></i> Reviews Shared With Me</h2>
-  </div>
+<div class="content-area">
+  <h2>Reviews Shared With Me</h2>
   <div class="card-body">
     {% if shared_reviews %}
       <div class="table-responsive">

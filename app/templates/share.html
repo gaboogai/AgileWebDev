@@ -1,19 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
-
-<div class="card"> <div class="card-header bg-primary text-white"> <h4><i class="fas fa-paper-plane"></i> Send Reviews</h4> </div> <div class="card-body">
-<form action="" method="POST">
-  {{ form.hidden_tag() }}
-  <p>
-      {{ form.submit() }}
-  </p>
-  <p>
-    {{ form.recipient_username.label }} <br>
-    {{ form.recipient_username(size=32) }}<br>
-  </p>
-  <p>
-      {{ form.review.label }}<br>
-      {{ form.review() }}
-  </p>
-</form>
+<div class="content-area">
+  <h2>Share Reviews</h2>
+  
+  <div class="card mb-4">
+    <div class="card-body">
+      <form action="" method="POST">
+        {{ form.hidden_tag() }}
+        
+        <div class="mb-3">
+          {{ form.recipient_username.label(class="form-label") }}
+          {{ form.recipient_username(class="form-control") }}
+          {% for error in form.recipient_username.errors %}
+            <span class="text-danger">{{ error }}</span>
+          {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+          {{ form.review.label(class="form-label") }}
+          {{ form.review(class="form-control") }}
+          {% for error in form.review.errors %}
+            <span class="text-danger">{{ error }}</span>
+          {% endfor %}
+        </div>
+        
+        {{ form.submit(class="btn btn-success") }}
+      </form>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12">
+    </div>
+  </div>
+</div>
 {% endblock %}
