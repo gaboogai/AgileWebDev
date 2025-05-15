@@ -15,13 +15,23 @@ pip install pytest selenium webdriver-manager pytest-html
 # Create directory for screenshots if it doesn't exist
 mkdir -p test_screenshots
 
-# Run tests with detailed output and HTML report
-echo "Running test_app.py..."
-python -m pytest -v test_app.py -s --html=test_report.html
+# Base tests (already working)
+echo "Running basic tests (test_app.py and test_advanced.py)..."
+python -m pytest -v test_app.py test_advanced.py -s --html=report_basic_tests.html
 
-echo "Running test_advanced.py..."
-python -m pytest -v test_advanced.py -s --html=test_report_advanced.html
+# New test categories
+echo "Running song management tests (test_song_management.py)..."
+python -m pytest -v test_song_management.py -s --html=report_song_management.html
+
+echo "Running review functionality tests (test_review_functionality.py)..."
+python -m pytest -v test_review_functionality.py -s --html=report_review_functionality.html
+
+echo "Running dashboard and navigation tests (test_dashboard_navigation.py)..."
+python -m pytest -v test_dashboard_navigation.py -s --html=report_dashboard_navigation.html
+
+echo "Running advanced user scenarios tests (test_advanced_scenarios.py)..."
+python -m pytest -v test_advanced_scenarios.py -s --html=report_advanced_scenarios.html
 
 # Output the results
-echo "Tests completed! Check the HTML reports and screenshots for details."
+echo "Tests completed! Check the HTML reports for details."
 echo "Screenshot files are saved in the project directory."
