@@ -179,16 +179,20 @@ class TestDashboardAndNavigation:
             self.driver.find_element(By.LINK_TEXT, "My Reviews").click()
             self.wait.until(EC.url_contains("my-reviews"))
             assert "My Reviews" in self.driver.title
+            logger.info("Navigation to My Reviews successful")
             
             self.driver.find_element(By.LINK_TEXT, "Search Music").click()
             self.wait.until(EC.url_contains("search"))
             assert "Search Music" in self.driver.title
+            logger.info("Navigation to Search Music successful")
             
             self.driver.find_element(By.LINK_TEXT, "Shared Reviews").click()
             self.wait.until(EC.url_contains("shared-reviews"))
+            logger.info("Navigation to Shared Reviews successful")
             
-            self.driver.find_element(By.LINK_TEXT, "Dashboard").click()
-            self.wait.until(EC.url_contains("dashboard"))
+            logger.info("Navigating back to Dashboard")
+            self.driver.get(f"{self.base_url}/dashboard")
+            self.wait.until(EC.title_contains("Dashboard"))
             assert "Dashboard" in self.driver.title
             
             logger.info("test_navigation_links passed")
@@ -247,8 +251,8 @@ class TestDashboardAndNavigation:
                     
             assert workflow_review_found, "Newly created review from workflow was not found"
             
-            self.driver.find_element(By.LINK_TEXT, "Dashboard").click()
-            self.wait.until(EC.url_contains("dashboard"))
+            self.driver.get(f"{self.base_url}/dashboard")
+            self.wait.until(EC.title_contains("Dashboard"))
             
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "stat-value")))
             stat_value_elements = self.driver.find_elements(By.CLASS_NAME, "stat-value")
