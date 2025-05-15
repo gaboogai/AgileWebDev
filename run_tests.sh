@@ -1,16 +1,19 @@
 #!/bin/bash
 
+# Make sure Flask is not running
 pkill -f "flask run" || true
 
+# Set up the environment for testing
 export FLASK_APP=server.py
 export FLASK_ENV=testing
 export SECRET_KEY=testing_secret_key
 
+# Install test dependencies
 pip install -r requirements.txt
 pip install pytest selenium webdriver-manager
 
-python -c "from app import db; db.create_all()"
+# Run the tests
+python -m pytest -v selenium_test.py advselenium_test.py
 
-python -m pytest -v
-
+# Output the results
 echo "Tests completed!"
