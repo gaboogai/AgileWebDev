@@ -21,6 +21,12 @@
           <h1><i class="fas fa-music"></i> TUN'D</h1>
           <p class="subtitle">Your personal music rating platform</p>
         </div>
+        <div class="text-center mt-3">
+          <p id="currentTime" class="text-muted mb-0"></p>
+          <span class="time-indicator">
+              <i class="fas fa-circle text-success" style="font-size: 0.5em; animation: pulse 1s infinite;"></i>
+          </span>
+        </div>
         <div class="user-info">
           <span>Welcome, {{ session.username }}</span>
           <a href="/logout" class="btn btn-outline-danger btn-sm ms-2">
@@ -79,14 +85,33 @@
         </div>
       </div>
     </div>
-    <span id="currentTime"></span>
+    <div class="text-center mt-3">
+        <p id="currentTime" class="text-muted mb-0"></p>
+        <span class="time-indicator">
+            <i class="fas fa-circle text-success" style="font-size: 0.5em; animation: pulse 1s infinite;"></i>
+        </span>
+    </div>
+    <style>
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
     <script>
-      function updateTime() {
-          fetch('/current-time')
-              .then(response => response.json())
-              .then(data => {
-                  document.getElementById('currentTime').textContent = data.time;
-              });
-      }
+        function updateTime() {
+            fetch('/current-time')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('currentTime').textContent = 'Current Time: ' + data.time;
+                });
+        }
+        
+        // Update time immediately when page loads
+        updateTime();
+        
+        // Update time every second
+        setInterval(updateTime, 1000);
+    </script>
   </body>
 </html>
