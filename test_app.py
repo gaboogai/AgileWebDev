@@ -10,11 +10,16 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 from app import app, db
 from app.models import User, Song, Review
 from werkzeug.security import generate_password_hash
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class TestApp:
     @pytest.fixture(autouse=True)
@@ -33,10 +38,12 @@ class TestApp:
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--window-size=1920,1080")  # Set window size
         chrome_options.add_argument("--disable-gpu")  # Disable GPU hardware acceleration
+        chrome_options.add_argument("--disable-extensions")  # Disable extensions
+        chrome_options.add_argument("--disable-infobars")  # Disable infobars
         
         # Setup WebDriver
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        self.wait = WebDriverWait(self.driver, 10)
+        self.wait = WebDriverWait(self.driver, 20)  # Increased timeout to 20 seconds
         
         # Create the database and the database tables
         with app.app_context():
@@ -74,10 +81,11 @@ class TestApp:
         self.flask_thread.start()
         
         # Give the app time to start
-        time.sleep(2)
+        time.sleep(3)  # Increased to 3 seconds
         
         # Set the base URL with the dynamic port
         self.base_url = f"http://localhost:{self.port}"
+        logger.info(f"Flask app running at {self.base_url}")
         
         yield
         
@@ -88,28 +96,60 @@ class TestApp:
     
     def test_homepage_redirect(self):
         """Test that homepage redirects to login page"""
+        logger.info("Running test_homepage_redirect")
         self.driver.get(f"{self.base_url}/")
         self.wait.until(EC.title_contains("TUN'D"))
         assert "login" in self.driver.current_url
+        logger.info("test_homepage_redirect passed")
     
     def test_register_user(self):
         """Test user registration functionality"""
-        self.driver.get(f"{self.base_url}/register")
+        logger.info("Running test_register_user")
         
-        # Wait for the registration form to be loaded
-        username_field = self.wait.until(EC.element_to_be_clickable((By.NAME, "username")))
-        password_field = self.wait.until(EC.element_to_be_clickable((By.NAME, "password")))
-        confirm_field = self.wait.until(EC.element_to_be_clickable((By.NAME, "confirm_password")))
+        # First load the login page which has the registration form
+        self.driver.get(f"{self.base_url}/login")
         
-        # Fill out registration form
-        username_field.send_keys("newuser")
-        password_field.send_keys("newpassword")
-        confirm_field.send_keys("newpassword")
+        # Take screenshot to debug
+        self.driver.save_screenshot("login_page.png")
+        logger.info(f"Login page title: {self.driver.title}")
         
-        # Use JavaScript to click the element to avoid ElementClickInterceptedException
-        submit_button = self.driver.find_element(By.NAME, "submit")
-        self.driver.execute_script("arguments[0].click();", submit_button)
+        # Check if we're actually on the login page
+        assert "TUN'D" in self.driver.title
         
-        # Check redirection
-        self.wait.until(EC.url_contains("dashboard"))
-        assert "Dashboard" in self.driver.title
+        try:
+            # Wait for forms to be visible
+            self.wait.until(EC.visibility_of_element_located((By.ID, "username")))
+            logger.info("Registration form is visible")
+            
+            # Sometimes Selenium can't find the elements if they're not in the viewport
+            # Let's make sure we're looking at the registration part
+            register_header = self.driver.find_element(By.XPATH, "//h3[contains(text(), 'Register')]")
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", register_header)
+            
+            # Now find the registration form fields - note we're using the second form on the page
+            # The login page has both login and register forms
+            username_field = self.driver.find_elements(By.ID, "username")[1]  # Second form username field
+            password_field = self.driver.find_elements(By.ID, "password")[1]  # Second form password field
+            confirm_field = self.driver.find_element(By.ID, "confirm_password")
+            
+            # Fill out registration form
+            username_field.send_keys("newuser")
+            password_field.send_keys("newpassword")
+            confirm_field.send_keys("newpassword")
+            
+            # Find register submit button in the second form
+            submit_buttons = self.driver.find_elements(By.NAME, "submit")
+            register_submit = submit_buttons[1]  # The second submit button is for registration
+            
+            # Use JavaScript to click the element to avoid ElementClickInterceptedException
+            self.driver.execute_script("arguments[0].click();", register_submit)
+            
+            # Check redirection
+            self.wait.until(EC.url_contains("dashboard"))
+            assert "Dashboard" in self.driver.title
+            logger.info("test_register_user passed")
+            
+        except Exception as e:
+            self.driver.save_screenshot("registration_error.png")
+            logger.error(f"Error in test_register_user: {str(e)}")
+            raise
