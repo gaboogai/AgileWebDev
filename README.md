@@ -24,10 +24,10 @@ To see analysis of these reviews simply check the dashboard of the site.
 TUN'D/
 |
 |-- app/                      # Main application package
-|   |── static/               # Static files (CSS, JavaScript)
+|   |-- static/               # Static files (CSS, JavaScript)
 |   |   |-- button.js         # JavaScript for button functionality
 |   |   |-- style_Main.css    # Main CSS styling
-|   |── templates/            # HTML templates
+|   |-- templates/            # HTML templates
 |   |   |-- base.html         # Base template with navigation structure
 |   |   |-- base_login.html   # Base template for login/register page
 |   |   |-- dashboard.html    # Dashboard template
