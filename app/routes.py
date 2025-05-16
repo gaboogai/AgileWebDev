@@ -1,5 +1,4 @@
-
-from flask import render_template, redirect, url_for, request, flash
+from flask import render_template, redirect, url_for, request, flash, jsonify
 from flask_login import UserMixin
 from app import app, db
 from app.models import User, Song, Review, ReviewShares
@@ -42,7 +41,6 @@ def register():
         username = form.username.data
         password = form.password.data
         
-        # Create new user
         new_user = User(username=username, password=generate_password_hash(password))
         db.session.add(new_user)
         db.session.commit()
@@ -51,7 +49,6 @@ def register():
         flash('Account created successfully!')
         return redirect(url_for('dashboard'))
     
-    # If validation fails, redirect to login page with registration form
     login_form = LoginForm()
     return render_template('login.html', title="Welcome to TUN'D", form=login_form, register_form=form)
 
@@ -62,18 +59,14 @@ def dashboard():
     username = current_user.get_id()
     user = User.query.filter_by(username=username).first()
     
-    # Get user's reviews
     user_reviews = Review.query.filter_by(username=username).all()
     
-    # Count statistics
     total_reviews = len(user_reviews)
     reviewed_songs = db.session.query(Review.song_id).filter_by(username=username).distinct().count()
     reviewed_artists = db.session.query(Song.artist).join(Review).filter(Review.username == username).distinct().count()
     
-    # Get recent reviews
     recent_reviews = Review.query.filter_by(username=username).order_by(Review.id.desc()).limit(5).all()
     
-    # Get top rated albums and songs
     top_songs = db.session.query(Song).join(Review).group_by(Song.id).order_by(db.func.avg(Review.rating).desc()).limit(5).all()
     
     return render_template('dashboard.html', 
@@ -109,10 +102,8 @@ def search():
     
     query = request.args.get('q', '')
     if query:
-        # Set the form field value to the query parameter
         search_form.query.data = query
         
-        # Search for songs by title or artist
         results = Song.query.filter(
             (Song.title.ilike(f'%{query}%')) | (Song.artist.ilike(f'%{query}%'))
         ).all()
@@ -135,14 +126,12 @@ def add_song():
         artist = add_song_form.artist.data
         title = add_song_form.title.data
         
-        # Check if song exists
         existing_song = Song.query.filter_by(title=title, artist=artist).first()
         
         if existing_song:
             flash('This song already exists')
             return redirect(url_for('search', q=artist))
         
-        # Create new song
         new_song = Song(title=title, artist=artist)
         db.session.add(new_song)
         db.session.commit()
@@ -150,7 +139,6 @@ def add_song():
         flash('Song added successfully! Now you can review it.')
         return redirect(url_for('review', song_id=new_song.id))
     
-    # If validation fails, redirect back to search with the form errors
     flash('Please fill in all the required fields')
     return redirect(url_for('search'))
 
@@ -160,10 +148,8 @@ def review(song_id):
     song = Song.query.get_or_404(song_id)
     form = ReviewForm()
     
-    # Check if user already has a review for this song
     existing_review = Review.query.filter_by(username=current_user.get_id(), song_id=song_id).first()
     
-    # Pre-populate form if review exists
     if existing_review and request.method == 'GET':
         form.rating.data = str(existing_review.rating)
         form.comment.data = existing_review.comment
@@ -175,13 +161,11 @@ def review(song_id):
         username = current_user.get_id()
         
         if existing_review:
-            # Update existing review
             existing_review.rating = rating
             existing_review.comment = comment
             db.session.commit()
             flash('Your review has been updated!')
         else:
-            # Create new review
             new_review = Review(rating=rating, comment=comment, username=username, song_id=song_id)
             db.session.add(new_review)
             db.session.commit()
@@ -223,15 +207,21 @@ def share():
     reviews = Review.query.filter_by(username=username).order_by(Review.id.desc()).all()
 
     form = ReviewSendForm()
-    form.review.choices = [(review.id, f"{review.song.title} - {review.rating}") for review in reviews]
+    
+    if reviews:
+        form.review.choices = [(str(review.id), f"{review.song.title} - {review.rating}★") for review in reviews]
+    else:
+        form.review.choices = []
 
     if form.validate_on_submit():
-        print(form.review.data)
-        print(form.recipient_username.data)
-        new_share = ReviewShares(review_id=form.review.data, username=form.recipient_username.data)
-        db.session.add(new_share)
-        db.session.commit()
-        flash('Review shared successfully!')
+        try:
+            review_id = int(form.review.data)
+            new_share = ReviewShares(review_id=review_id, username=form.recipient_username.data)
+            db.session.add(new_share)
+            db.session.commit()
+            flash('Review shared successfully!')
+        except Exception as e:
+            flash(f'Error sharing review: {str(e)}')
         return redirect(url_for('share'))
     
     return render_template("share.html", title="Share", 

@@ -51,27 +51,27 @@
           <div class="sidebar">
             <ul class="nav flex-column">
               <li class="nav-item">
-                <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard">
+                <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
                   <i class="fas fa-home"></i> Dashboard
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link {% if request.path == '/my-reviews' %}active{% endif %}" href="/my-reviews">
+                <a class="nav-link {% if request.path == '/my-reviews' %}active{% endif %}" href="{{ url_for('my_reviews') }}">
                   <i class="fas fa-star"></i> My Reviews
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link {% if request.path == '/search' %}active{% endif %}" href="/search">
-                  <i class="fas fa-search"></i> Search Music
+                <a class="nav-link {% if request.path == '/search' %}active{% endif %}" href="{{ url_for('search') }}">
+                  <i class="fas fa-search"></i> Review Music
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link {% if request.path == '/shared-reviews' %}active{% endif %}" href="/shared-reviews">
+                <a class="nav-link {% if request.path == '/shared-reviews' %}active{% endif %}" href="{{ url_for('shared_reviews') }}">
                   <i class="fas fa-user-friends"></i> Shared Reviews
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="share">
+                <a class="nav-link {% if request.path == '/share' %}active{% endif %}" href="{{ url_for('share') }}">
                   <i class="fas fa-arrow-right"></i> Share Music
                 </a>
               </li>
@@ -99,19 +99,32 @@
         }
     </style>
     <script>
+        const timeRefreshInterval = 5000;
+        let timeUpdateTimer;
+
         function updateTime() {
             fetch('/current-time')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('currentTime').textContent = 'Current Time: ' + data.time;
+                    const timeElements = document.querySelectorAll('#currentTime');
+                    timeElements.forEach(element => {
+                        element.textContent = 'Current Time: ' + data.time;
+                    });
                 });
         }
         
-        // Update time immediately when page loads
         updateTime();
         
-        // Update time every second
-        setInterval(updateTime, 1000);
+        timeUpdateTimer = setInterval(updateTime, timeRefreshInterval);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    clearInterval(timeUpdateTimer);
+                });
+            });
+        });
     </script>
   </body>
 </html>

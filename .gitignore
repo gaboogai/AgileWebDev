@@ -2,3 +2,9 @@
 *.db
 venv/
 .env
+*report_advanced_scenarios.html
+*report_basic_tests.html
+*report_dashboard_navigation.html
+*report_review_functionality.html
+*report_song_management.html
+**.png

@@ -16,8 +16,6 @@ class User(db.Model, UserMixin):
     def get_id(self):
         return self.username
 
-        
-
 class Song(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -33,8 +31,8 @@ class Review(db.Model):
 
 class ReviewShares(db.Model):
     share_id = db.Column(db.Integer, primary_key=True)
-    review_id = db.Column(db.Integer, db.ForeignKey('review.id'), nullable=False)
-    username = db.Column(db.String(20), db.ForeignKey('user.username'), nullable=False)
+    review_id = db.Column(db.Integer, db.ForeignKey('review.id', name="required"), nullable=False)
+    username = db.Column(db.String(20), db.ForeignKey('user.username', name="required2"), nullable=False)
 
 @login.user_loader
 def load_user(user):
