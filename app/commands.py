@@ -3,6 +3,7 @@ from flask.cli import with_appcontext
 from app import db
 from app.models import User, Song, Review
 
+# Command to initialize the database
 @click.command('init-db')
 @with_appcontext
 def init_db_command():
@@ -10,6 +11,7 @@ def init_db_command():
     db.create_all()
     click.echo('Initialized the database.')
 
+# Command to seed the database with sample data
 @click.command('seed-db')
 @with_appcontext
 def seed_db_command():
@@ -27,9 +29,11 @@ def seed_db_command():
         Song(title='Smells Like Teen Spirit', artist='Nirvana')
     ]
     
+    # Add users to the session
     for user in users:
         db.session.add(user)
     
+    # Add songs to the session
     for song in songs:
         db.session.add(song)
     
@@ -42,6 +46,7 @@ def seed_db_command():
         Review(rating=3, comment='Good, but not my favorite', username='test', song_id=3)
     ]
     
+    # Add reviews to the session
     for review in reviews:
         db.session.add(review)
     

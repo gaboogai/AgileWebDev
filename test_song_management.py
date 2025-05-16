@@ -21,8 +21,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class TestSongManagement:
+    """Test class for song management functionality"""
+
     @pytest.fixture(autouse=True)
     def setup(self):
+        """Setup test database, webdriver, and Flask app"""
         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False

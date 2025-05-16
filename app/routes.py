@@ -8,11 +8,13 @@ from flask_wtf import FlaskForm
 from app.forms import ReviewSendForm, LoginForm, RegistrationForm, SearchForm, AddSongForm, ReviewForm
 import datetime
 
+# Redirect root and /index to login page
 @app.route('/')
 @app.route('/index')
 def index():
     return redirect(url_for('login'))
 
+# Login route for users
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -33,6 +35,7 @@ def login():
     
     return render_template("login.html", title="Welcome to TUN'D", form=form, register_form=register_form)
 
+# Registration route for new users
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
@@ -56,6 +59,7 @@ def register():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # Dashboard for logged-in user, shows stats and recent/top reviews
     username = current_user.get_id()
     user = User.query.filter_by(username=username).first()
     
@@ -78,11 +82,13 @@ def dashboard():
                            recent_reviews=recent_reviews,
                            top_songs=top_songs)
 
+# Logout route for users
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
+# Route to display user's own reviews
 @app.route('/my-reviews')
 @login_required
 def my_reviews():
@@ -91,6 +97,7 @@ def my_reviews():
     
     return render_template('my_reviews.html', title="My Reviews", reviews=user_reviews)
 
+# Route for searching songs and artists
 @app.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
@@ -117,6 +124,7 @@ def search():
                           results=results, 
                           query=query)
 
+# Route to add a new song
 @app.route('/add-song', methods=['POST'])
 @login_required
 def add_song():
@@ -142,6 +150,7 @@ def add_song():
     flash('Please fill in all the required fields')
     return redirect(url_for('search'))
 
+# Route to review a song (add or update review)
 @app.route('/review/<int:song_id>', methods=['GET', 'POST'])
 @login_required
 def review(song_id):
@@ -175,6 +184,7 @@ def review(song_id):
     
     return render_template('review.html', title=f"Review - {song.title}", song=song, form=form)
 
+# Route to view reviews shared with the current user
 @app.route('/shared-reviews')
 @login_required
 def shared_reviews():
@@ -191,13 +201,13 @@ def shared_reviews():
                            title="Reviews Shared With Me", 
                            shared_reviews=shared_reviews)
 
-
+# Route to get current server time (JSON)
 @app.route('/current-time')
 def current_time():
     now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     return jsonify({'time': now})
   
-
+# Route to share a review with another user
 @app.route('/share', methods=['GET', 'POST'])
 @login_required
 def share():

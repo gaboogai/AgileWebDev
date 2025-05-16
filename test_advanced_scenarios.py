@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 class TestAdvancedUserScenarios:
     @pytest.fixture(autouse=True)
     def setup(self):
+        # Setup test database and Selenium WebDriver
         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
@@ -67,6 +68,7 @@ class TestAdvancedUserScenarios:
             db.session.commit()
         
         def find_free_port():
+            # Find a free port for the Flask app
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('', 0))
                 return s.getsockname()[1]
@@ -74,6 +76,7 @@ class TestAdvancedUserScenarios:
         self.port = find_free_port()
         
         def run_flask_app():
+            # Run Flask app in a separate thread
             app.run(port=self.port, use_reloader=False)
             
         self.flask_thread = Thread(target=run_flask_app)
@@ -120,6 +123,7 @@ class TestAdvancedUserScenarios:
         self.login_user('sender', 'password1')
         
         try:
+            # Go to share page and share a review
             self.driver.get(f"{self.base_url}/share")
             self.driver.save_screenshot("share_page_sender.png")
             
@@ -166,6 +170,7 @@ class TestAdvancedUserScenarios:
             self.driver.get(f"{self.base_url}/logout")
             self.wait.until(EC.url_contains("login"))
             
+            # Login as receiver and check shared reviews
             self.login_user('receiver', 'password2')
             
             self.driver.get(f"{self.base_url}/shared-reviews")

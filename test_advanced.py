@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 class TestAdvancedFeatures:
     @pytest.fixture(autouse=True)
     def setup(self):
+        # Setup test database and Selenium WebDriver
         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
@@ -66,6 +67,7 @@ class TestAdvancedFeatures:
             db.session.commit()
         
         def find_free_port():
+            # Find a free port for the Flask app
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('', 0))
                 return s.getsockname()[1]
@@ -73,6 +75,7 @@ class TestAdvancedFeatures:
         self.port = find_free_port()
         
         def run_flask_app():
+            # Run Flask app in a separate thread
             app.run(port=self.port, use_reloader=False)
             
         self.flask_thread = Thread(target=run_flask_app)
@@ -126,6 +129,7 @@ class TestAdvancedFeatures:
         try:
             self.wait.until(EC.visibility_of_element_located((By.ID, "recipient_username")))
             
+            # Select the first review to share
             self.driver.execute_script("""
                 document.getElementById('review').value = document.getElementById('review').options[0].value;
             """)
@@ -137,6 +141,7 @@ class TestAdvancedFeatures:
             submit_button = self.driver.find_element(By.NAME, "submit")
             self.driver.execute_script("arguments[0].click();", submit_button)
             
+            # Wait for and check success message
             self.wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "alert-success")))
             flash_message = self.driver.find_element(By.CLASS_NAME, "alert-success")
             assert "Review shared successfully" in flash_message.text
@@ -157,6 +162,7 @@ class TestAdvancedFeatures:
         try:
             self.wait.until(EC.visibility_of_element_located((By.ID, "username")))
             
+            # Fill registration form with duplicate username
             register_header = self.driver.find_element(By.XPATH, "//h3[contains(text(), 'Register')]")
             self.driver.execute_script("arguments[0].scrollIntoView(true);", register_header)
             
@@ -173,6 +179,7 @@ class TestAdvancedFeatures:
             
             self.driver.execute_script("arguments[0].click();", register_submit)
             
+            # Wait for and check error message
             self.wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "text-danger")))
             error_message = self.driver.find_element(By.CLASS_NAME, "text-danger")
             assert "Username already exists" in error_message.text
@@ -193,6 +200,7 @@ class TestAdvancedFeatures:
         try:
             self.wait.until(EC.visibility_of_element_located((By.ID, "username")))
             
+            # Fill registration form with mismatched passwords
             register_header = self.driver.find_element(By.XPATH, "//h3[contains(text(), 'Register')]")
             self.driver.execute_script("arguments[0].scrollIntoView(true);", register_header)
             
@@ -209,6 +217,7 @@ class TestAdvancedFeatures:
             
             self.driver.execute_script("arguments[0].click();", register_submit)
             
+            # Wait for and check error message
             self.wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "text-danger")))
             error_message = self.driver.find_element(By.CLASS_NAME, "text-danger")
             assert "Passwords must match" in error_message.text

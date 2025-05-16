@@ -22,8 +22,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class TestDashboardAndNavigation:
+    # Test class for dashboard and navigation features
+
     @pytest.fixture(autouse=True)
     def setup(self):
+        # Setup test database, webdriver, and Flask app
         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
@@ -98,7 +101,7 @@ class TestDashboardAndNavigation:
         os.unlink(app.config['DATABASE'])
     
     def login_user(self):
-        """Helper method to login as testuser"""
+        # Helper method to login as testuser
         logger.info("Logging in as testuser")
         self.driver.get(f"{self.base_url}/login")
         
@@ -120,7 +123,7 @@ class TestDashboardAndNavigation:
             raise
     
     def test_dashboard_statistics(self):
-        """Test that dashboard displays correct statistics"""
+        # Test that dashboard displays correct statistics
         logger.info("Running test_dashboard_statistics")
         self.login_user()
         
@@ -171,7 +174,7 @@ class TestDashboardAndNavigation:
             raise
     
     def test_navigation_links(self):
-        """Test that navigation links in the sidebar work correctly"""
+        # Test that navigation links in the sidebar work correctly
         logger.info("Running test_navigation_links")
         self.login_user()
         
@@ -203,7 +206,7 @@ class TestDashboardAndNavigation:
             raise
     
     def test_combined_workflow(self):
-        """Test a combined workflow: search -> add -> review -> view in my reviews"""
+        # Test a combined workflow: search -> add -> review -> view in my reviews
         logger.info("Running test_combined_workflow")
         self.login_user()
         
