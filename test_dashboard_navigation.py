@@ -181,7 +181,7 @@ class TestDashboardAndNavigation:
             assert "My Reviews" in self.driver.title
             logger.info("Navigation to My Reviews successful")
             
-            self.driver.find_element(By.LINK_TEXT, "Search Music").click()
+            self.driver.find_element(By.LINK_TEXT, "Review Music").click()
             self.wait.until(EC.url_contains("search"))
             assert "Search Music" in self.driver.title
             logger.info("Navigation to Search Music successful")
@@ -208,7 +208,7 @@ class TestDashboardAndNavigation:
         self.login_user()
         
         try:
-            self.driver.find_element(By.LINK_TEXT, "Search Music").click()
+            self.driver.find_element(By.LINK_TEXT, "Review Music").click()
             self.wait.until(EC.visibility_of_element_located((By.ID, "query")))
             
             search_term = "Unique Workflow Test Song"
