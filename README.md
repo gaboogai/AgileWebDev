@@ -17,7 +17,7 @@ To see analysis of these reviews simply check the dashboard of the site.
 | -------- | -------------- | --------------- |
 | 23418094 | Michael Millar | gaboogai        |
 | 24256619 | Danny Nguyen   | DannyNguyen5104 |
-| 23860508 | Samay Gupta    | Samo-e          |
+| 23860508 | Samay Gupta    | samo-e          |
 
 # Launching the Application
 
