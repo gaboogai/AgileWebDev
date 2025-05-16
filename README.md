@@ -19,6 +19,55 @@ To see analysis of these reviews simply check the dashboard of the site.
 | 24256619 | Danny Nguyen   | DannyNguyen5104 |
 | 23860508 | Samay Gupta    | samo-e          |
 
+# Directory Structure
+
+TUN'D/
+│
+├── app/                      # Main application package
+│   ├── static/               # Static files (CSS, JavaScript)
+│   │   ├── button.js         # JavaScript for button functionality
+│   │   └── style_Main.css    # Main CSS styling
+│   ├── templates/            # HTML templates
+│   │   ├── base.html         # Base template with navigation structure
+│   │   ├── base_login.html   # Base template for login/register page
+│   │   ├── dashboard.html    # Dashboard template
+│   │   ├── login.html        # Login/register template
+│   │   ├── my_reviews.html   # User reviews template
+│   │   ├── review.html       # Add/edit review template
+│   │   ├── search.html       # Search template
+│   │   ├── share.html        # Review sharing template
+│   │   └── shared_reviews.html # Shared reviews template
+│   ├── __init__.py           # Flask application initialization
+│   ├── commands.py           # Flask CLI commands
+│   ├── forms.py              # Form definitions using Flask-WTF
+│   ├── models.py             # Database models
+│   └── routes.py             # Route definitions and handlers
+│
+├── migrations/               # Database migration files
+│   ├── versions/             # Migration version scripts
+│   │   ├── 1afb4f2625e5_initial.py      # Initial migration
+│   │   ├── 305e7a5ceb01_reviewshares_table.py  # ReviewShares table migration
+│   │   └── f3c0a0e799f7_username_col.py  # Username column migration
+│   ├── alembic.ini           # Alembic configuration
+│   ├── env.py                # Migration environment
+│   └── script.py.mako        # Template for migration scripts
+│
+├── assets/                   # Additional assets for testing
+│   └── style.css             # Testing report styles
+│
+├── conftest.py               # Pytest configuration and fixtures
+├── requirements.txt          # Project dependencies
+├── README.md                 # Project documentation (this file)
+├── run_tests.sh              # Test execution script
+├── server.py                 # Application entry point
+├── test_app.py               # Basic authentication tests
+├── test_advanced.py          # Advanced authentication tests
+├── test_advanced_scenarios.py # Multi-user interaction tests
+├── test_dashboard_navigation.py # UI navigation tests
+├── test_review_functionality.py # Review feature tests
+├── test_song_management.py   # Song management tests
+└── testing_guidelines.md     # Documentation for test suite
+
 # Launching the Application
 
 ## Guide for Using Venv
