@@ -60,6 +60,7 @@ The project is organized as follows:
 - `requirements.txt` - Project dependencies
 - `README.md` - Project documentation
 - `server.py` - Application entry point
+- `.flaskenv` - Flask environment variables
 
 ## Group Members
 | ID       | Name           | github username |
