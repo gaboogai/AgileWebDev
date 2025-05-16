@@ -1,14 +1,14 @@
 # TUN'D
 
 ## Description
-TUN'D is a mushc review platform. Our website gives users a centralised place to record their feelings about songs and store a permenant record of music they have listened to.
+TUN'D is a music review platform. Our website gives users a centralised place to record their feelings about songs and store a permenant record of music they have listened to.
 Our website also offers analysis of these reviews by sharing the top songs reviewed and data about users reviews.
 On top of this users can share their reviews with other users creating a network to explore music.
 
 ## Use
 Users first need to register for the site. These details can be used to log in at later points
-Reviews are created by first searching for the song to see if someone else has already reviewed if (if not you can be the first to add it).
-After this the User can input their review and a rating of how they found the song.
+Reviews are created by first searching for the song to see if someone else has already reviewed it (if not you can be the first to add it).
+After this the user can input their review and a rating of the song.
 Sharing can be done by selecting from the drop down menu of created reviews and then entering the username of the user to share it with.
 To see analysis of these reviews simply check the dashboard of the site. 
 
@@ -39,7 +39,7 @@ To activate venv, for Windows:
 ```bash
 .\venv\Scripts\activate
 ```
-To activate venv, for Linux
+To activate venv, for Linux or Mac
 ```bash
 source venv/bin/activate
 ```
@@ -72,13 +72,13 @@ flask run
 
 The testing is done automatically from the main directory using
 ```bash
-./run_tests.sh"
+./run_tests.sh
 ```
-(if one a mac it may be needed to first give the testing scripts exectuable permissions using)
+(if using a mac it may be needed to first give the testing scripts executable permissions using)
 ```bash
 chmod +x run_tests.sh
 ```
 
 After the tests are complete you will see some new html files created. 
 Open those html files in your browser and you will see like a full report of the tests. 
-It will also create some new png files too so you can see what page it is on and what the website will look like.
+It will also create some png displaying the website.
