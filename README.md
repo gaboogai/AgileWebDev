@@ -35,6 +35,7 @@ The project is organized as follows:
   - `forms.py` - Form definitions using Flask-WTF
   - `models.py` - Database models
   - `routes.py` - Route definitions and handlers
+  - `.flaskenv` - Flask environment variables
 
 - **migrations/** - Database migration files
   - **versions/** - Migration version scripts
