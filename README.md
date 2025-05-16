@@ -16,7 +16,6 @@ To see analysis of these reviews simply check the dashboard of the site.
 
 The project is organized as follows:
 
-### Main Application
 - **app/** - Main application package
   - **static/** - Static files (CSS, JavaScript)
     - `button.js` - JavaScript for button functionality
@@ -37,7 +36,6 @@ The project is organized as follows:
   - `models.py` - Database models
   - `routes.py` - Route definitions and handlers
 
-### Database
 - **migrations/** - Database migration files
   - **versions/** - Migration version scripts
     - `1afb4f2625e5_initial.py` - Initial migration
@@ -47,9 +45,9 @@ The project is organized as follows:
   - `env.py` - Migration environment
   - `script.py.mako` - Template for migration scripts
 
-### Testing
 - **assets/** - Additional assets for testing
   - `style.css` - Testing report styles
+
 - `conftest.py` - Pytest configuration and fixtures
 - `run_tests.sh` - Test execution script
 - `test_app.py` - Basic authentication tests
@@ -59,10 +57,6 @@ The project is organized as follows:
 - `test_review_functionality.py` - Review feature tests
 - `test_song_management.py` - Song management tests
 - `testing_guidelines.md` - Documentation for test suite
-
-### Configuration
-- `.flaskenv` - Flask environment variables
-- `.gitignore` - Git ignore rules
 - `requirements.txt` - Project dependencies
 - `README.md` - Project documentation
 - `server.py` - Application entry point
