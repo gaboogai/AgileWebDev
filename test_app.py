@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 class TestApp:
     @pytest.fixture(autouse=True)
     def setup(self):
+        # Setup test database and Selenium WebDriver
         self.db_fd, app.config['DATABASE'] = tempfile.mkstemp()
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
@@ -58,6 +59,7 @@ class TestApp:
             db.session.commit()
         
         def find_free_port():
+            # Find a free port for the Flask app
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('', 0))
                 return s.getsockname()[1]
@@ -65,6 +67,7 @@ class TestApp:
         self.port = find_free_port()
         
         def run_flask_app():
+            # Run Flask app in a separate thread
             app.run(port=self.port, use_reloader=False)
             
         self.flask_thread = Thread(target=run_flask_app)
@@ -105,6 +108,7 @@ class TestApp:
             self.wait.until(EC.visibility_of_element_located((By.ID, "username")))
             logger.info("Registration form is visible")
             
+            # Fill registration form and submit
             register_header = self.driver.find_element(By.XPATH, "//h3[contains(text(), 'Register')]")
             self.driver.execute_script("arguments[0].scrollIntoView(true);", register_header)
             
@@ -121,6 +125,7 @@ class TestApp:
             
             self.driver.execute_script("arguments[0].click();", register_submit)
             
+            # Wait for dashboard after registration
             self.wait.until(EC.url_contains("dashboard"))
             assert "Dashboard" in self.driver.title
             logger.info("test_register_user passed")
